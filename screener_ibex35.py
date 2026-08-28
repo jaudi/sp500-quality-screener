@@ -41,6 +41,10 @@ def main():
         output_filename="latest-report-ibex35.json",
         universo_nombre="el IBEX 35",
         limite_analisis_default=35,
+        # ROA no es un filtro duro aquí: el IBEX 35 está muy cargado de bancos
+        # y utilities, sectores donde un ROA bajo es estructural del negocio,
+        # no una señal real de mala calidad (ver common.filtrar_acciones_calidad).
+        roa_minimo=None,
     )
 
 

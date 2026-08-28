@@ -38,6 +38,7 @@ def main():
         output_filename="latest-report.json",
         universo_nombre="el S&P 500",
         limite_analisis_default=500,
+        roa_minimo=0.12,  # explícito: el S&P 500 sí exige ROA como filtro duro
     )
 
 

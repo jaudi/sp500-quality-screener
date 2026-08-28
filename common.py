@@ -95,12 +95,13 @@ def filtrar_acciones_calidad(
     limite_analisis: int = 500,
     pausa_entre_tickers: float = 0.4,
     verbose_errores: bool = True,
+    roa_minimo: float | None = 0.12,
 ) -> tuple[list, list]:
     """
-    Filtra empresas por 6 criterios:
+    Filtra empresas por criterios fundamentales y técnicos:
     Fundamentales:
       1. ROE > 20%
-      2. ROA > 12%
+      2. ROA > roa_minimo (opcional — ver abajo)
       3. P/E < 20
       4. Deuda/Patrimonio < 100% (evita "quality traps" apalancados)
     Técnicos:
@@ -108,12 +109,22 @@ def filtrar_acciones_calidad(
          para no descartar los nombres con momentum más fuerte)
       6. Precio actual > Media móvil de 50 días (confirma tendencia alcista)
 
+    roa_minimo controla si ROA es un filtro duro o solo informativo:
+      - float (ej. 0.12): exige ROA > roa_minimo, igual que el resto de
+        fundamentales. Es el comportamiento por defecto (pensado para el
+        S&P 500, con perfil growth/tech).
+      - None: ROA se sigue calculando e incluyendo en el resultado, pero no
+        descarta a nadie. Pensado para índices con más bancos/utilities
+        (ej. IBEX 35), donde un ROA bajo es estructural del sector y no una
+        señal real de mala calidad. Puede salir "N/A" si yfinance no lo reporta.
+
     Devuelve (ganadores, fallidos):
-      - ganadores: lista de dicts con las empresas que pasaron los 6 filtros
+      - ganadores: lista de dicts con las empresas que pasaron todos los filtros
       - fallidos:  lista de dicts {ticker, error} para tickers que no se
                    pudieron evaluar (error de API), distintos de los que
                    simplemente no cumplieron los criterios.
     """
+    num_filtros = 6 if roa_minimo is not None else 5
     muestra = tickers[:limite_analisis]
     print(f"\n🔍 Analizando fundamentales y técnicos de los primeros {len(muestra)} tickers...")
 
@@ -130,10 +141,16 @@ def filtrar_acciones_calidad(
             roa = info.get("returnOnAssets")
             deuda_patrimonio = info.get("debtToEquity")
 
-            if not (pe and roe and roa and deuda_patrimonio is not None):
+            campos_requeridos = (pe, roe, deuda_patrimonio is not None)
+            if roa_minimo is not None:
+                campos_requeridos = (*campos_requeridos, roa)
+            if not all(campos_requeridos):
                 descartados += 1
                 continue
-            if not ((0 < pe < 20) and (roe > 0.20) and (roa > 0.12) and (deuda_patrimonio < 100)):
+            if not ((0 < pe < 20) and (roe > 0.20) and (deuda_patrimonio < 100)):
+                descartados += 1
+                continue
+            if roa_minimo is not None and not (roa > roa_minimo):
                 descartados += 1
                 continue
 
@@ -155,7 +172,7 @@ def filtrar_acciones_calidad(
                     "sector": info.get("sector", "N/A"),
                     "per": round(pe, 2),
                     "roe": f"{round(roe * 100, 2)}%",
-                    "roa": f"{round(roa * 100, 2)}%",
+                    "roa": f"{round(roa * 100, 2)}%" if roa is not None else "N/A",
                     "deuda_patrimonio": f"{round(deuda_patrimonio, 1)}%",
                     "rsi": tecnicos["rsi"],
                     "precio_actual": tecnicos["precio_actual"],
@@ -177,7 +194,7 @@ def filtrar_acciones_calidad(
     df_resumen = pd.DataFrame(ganadores)
     print("\n📊 Resumen del cribado:")
     print(f"   Total analizado:      {len(muestra)}")
-    print(f"   Cumplieron 6 filtros: {len(ganadores)}")
+    print(f"   Cumplieron {num_filtros} filtros: {len(ganadores)}")
     print(f"   Descartados (no cumplieron criterios): {descartados}")
     print(f"   Fallidos (error de API, no evaluados):  {len(fallidos)}")
 
@@ -185,7 +202,7 @@ def filtrar_acciones_calidad(
         print("\n⚠️  Tickers que fallaron y NO se evaluaron (revisar si son falsos negativos):")
         print(", ".join(f["ticker"] for f in fallidos))
 
-    print(f"\n✅ Empresas que superaron los 6 filtros ({len(ganadores)}):\n")
+    print(f"\n✅ Empresas que superaron los {num_filtros} filtros ({len(ganadores)}):\n")
     if not df_resumen.empty:
         print(df_resumen.to_string(index=False))
     else:
@@ -233,15 +250,16 @@ tools = [
 # ==============================================================================
 # BUCLE AGÉNTICO CON GROQ (GPT-OSS-120B)
 # ==============================================================================
-def generar_informe(empresas_seleccionadas: list, universo_nombre: str) -> str:
+def generar_informe(empresas_seleccionadas: list, universo_nombre: str, roa_minimo: float | None = 0.12) -> str:
     client = _groq_client()
+    num_criterios = 6 if roa_minimo is not None else 5
+    linea_roa = f"- ROA > {round(roa_minimo * 100)}%\n" if roa_minimo is not None else ""
     prompt_analista = f"""
-Eres un analista de inversiones senior. Hemos filtrado {universo_nombre} usando 6 criterios:
+Eres un analista de inversiones senior. Hemos filtrado {universo_nombre} usando {num_criterios} criterios:
 
 Fundamentales:
 - ROE > 20%
-- ROA > 12%
-- P/E < 20
+{linea_roa}- P/E < 20
 - Deuda/Patrimonio < 100% (evita empresas con ROE inflado por apalancamiento excesivo)
 
 Técnicos:
@@ -316,8 +334,12 @@ def run_pipeline(
     universo_nombre: str,
     limite_analisis_default: int = 500,
     pausa_entre_tickers: float = 0.4,
+    roa_minimo: float | None = 0.12,
 ) -> str:
     """Ejecuta el cribado completo para un índice y escribe el JSON de salida.
+
+    roa_minimo: ver filtrar_acciones_calidad — pásalo como None para índices
+    donde ROA no debería ser un filtro duro (ej. IBEX 35).
 
     Devuelve la ruta del archivo escrito.
     """
@@ -330,11 +352,12 @@ def run_pipeline(
         todos_los_tickers,
         limite_analisis=limite_analisis,
         pausa_entre_tickers=pausa_entre_tickers,
+        roa_minimo=roa_minimo,
     )
 
     report_text = None
     if empresas_seleccionadas:
-        report_text = generar_informe(empresas_seleccionadas, universo_nombre)
+        report_text = generar_informe(empresas_seleccionadas, universo_nombre, roa_minimo)
     else:
         print("Ninguna empresa cumplió los filtros esta semana — se omite la llamada a Groq.")
 
