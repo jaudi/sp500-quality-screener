@@ -1,0 +1,6 @@
+yfinance
+pandas
+groq
+ddgs
+lxml
+requests
