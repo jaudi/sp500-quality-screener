@@ -120,18 +120,19 @@ def filtrar_acciones_calidad(
     verbose_errores: bool = True,
 ) -> tuple[list, list]:
     """
-    Filtra empresas por 5 criterios:
+    Filtra empresas por 6 criterios:
     Fundamentales:
-      1. ROE > 15%
-      2. ROA > 8%
-      3. P/E < 25
+      1. ROE > 20%
+      2. ROA > 12%
+      3. P/E < 20
+      4. Deuda/Patrimonio < 100% (evita "quality traps" apalancados)
     Técnicos:
-      4. RSI (14 días) > 30 (excluye sobreventa/distress; sin tope superior
+      5. RSI (14 días) > 30 (excluye sobreventa/distress; sin tope superior
          para no descartar los nombres con momentum más fuerte)
-      5. Precio actual > Media móvil de 50 días (confirma tendencia alcista)
+      6. Precio actual > Media móvil de 50 días (confirma tendencia alcista)
 
     Devuelve (ganadores, fallidos):
-      - ganadores: lista de dicts con las empresas que pasaron los 5 filtros
+      - ganadores: lista de dicts con las empresas que pasaron los 6 filtros
       - fallidos:  lista de dicts {ticker, error} para tickers que no se
                    pudieron evaluar (error de API), distintos de los que
                    simplemente no cumplieron los criterios.
@@ -150,11 +151,12 @@ def filtrar_acciones_calidad(
             pe = info.get("trailingPE") or info.get("forwardPE")
             roe = info.get("returnOnEquity")
             roa = info.get("returnOnAssets")
+            deuda_patrimonio = info.get("debtToEquity")
 
-            if not (pe and roe and roa):
+            if not (pe and roe and roa and deuda_patrimonio is not None):
                 descartados += 1
                 continue
-            if not ((0 < pe < 25) and (roe > 0.15) and (roa > 0.08)):
+            if not ((0 < pe < 20) and (roe > 0.20) and (roa > 0.12) and (deuda_patrimonio < 100)):
                 descartados += 1
                 continue
 
@@ -177,6 +179,7 @@ def filtrar_acciones_calidad(
                     "per": round(pe, 2),
                     "roe": f"{round(roe * 100, 2)}%",
                     "roa": f"{round(roa * 100, 2)}%",
+                    "deuda_patrimonio": f"{round(deuda_patrimonio, 1)}%",
                     "rsi": tecnicos["rsi"],
                     "precio_actual": tecnicos["precio_actual"],
                     "ma50": tecnicos["ma50"],
@@ -197,7 +200,7 @@ def filtrar_acciones_calidad(
     df_resumen = pd.DataFrame(ganadores)
     print("\n📊 Resumen del cribado:")
     print(f"   Total analizado:      {len(muestra)}")
-    print(f"   Cumplieron 5 filtros: {len(ganadores)}")
+    print(f"   Cumplieron 6 filtros: {len(ganadores)}")
     print(f"   Descartados (no cumplieron criterios): {descartados}")
     print(f"   Fallidos (error de API, no evaluados):  {len(fallidos)}")
 
@@ -205,7 +208,7 @@ def filtrar_acciones_calidad(
         print("\n⚠️  Tickers que fallaron y NO se evaluaron (revisar si son falsos negativos):")
         print(", ".join(f["ticker"] for f in fallidos))
 
-    print(f"\n✅ Empresas que superaron los 5 filtros ({len(ganadores)}):\n")
+    print(f"\n✅ Empresas que superaron los 6 filtros ({len(ganadores)}):\n")
     if not df_resumen.empty:
         print(df_resumen.to_string(index=False))
     else:
@@ -256,12 +259,13 @@ tools = [
 def generar_informe(empresas_seleccionadas: list) -> str:
     client = _groq_client()
     prompt_analista = f"""
-Eres un analista de inversiones senior. Hemos filtrado el S&P 500 usando 5 criterios:
+Eres un analista de inversiones senior. Hemos filtrado el S&P 500 usando 6 criterios:
 
 Fundamentales:
-- ROE > 15%
-- ROA > 8%
-- P/E < 25
+- ROE > 20%
+- ROA > 12%
+- P/E < 20
+- Deuda/Patrimonio < 100% (evita empresas con ROE inflado por apalancamiento excesivo)
 
 Técnicos:
 - RSI (14 días) > 30 (excluye sobreventa/distress, sin tope superior para no penalizar el momentum fuerte)
