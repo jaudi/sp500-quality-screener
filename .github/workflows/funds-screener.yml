@@ -1,10 +1,8 @@
-name: Funds Screener (manual)
-
-# Manual trigger only for now — no schedule. Run this a few times via
-# workflow_dispatch and review the output before adding a weekly cron,
-# same rollout approach as the stock screeners.
+name: Funds Screener
 
 on:
+  schedule:
+    - cron: "0 6 * * 1" # Every Monday 06:00 UTC, same as the stock screeners
   workflow_dispatch: {}
 
 permissions:
