@@ -13,6 +13,7 @@ import time
 from datetime import datetime, timezone
 
 import pandas as pd
+import requests
 import yfinance as yf
 from ddgs import DDGS
 from groq import Groq
@@ -323,6 +324,278 @@ Instrucciones para el análisis:
                         "content": info_noticias,
                     }
                 )
+
+
+# ==============================================================================
+# SCREENER DE FONDOS TRANSPARENTES (ETFs UCITS) — API PÚBLICA DE ISHARES
+# ==============================================================================
+ISHARES_PRODUCT_DATA_URL = (
+    "https://www.ishares.com/varnish-api/blk-product-screener-server/api/v1/"
+    "product-screener/product-data?country=gb&language=en&siteName=ishares-uk&userType=individual"
+)
+
+
+def obtener_universo_ishares() -> dict:
+    """Descarga el catálogo público completo de productos iShares (BlackRock).
+
+    Es la misma API JSON que alimenta su propio buscador de fondos para
+    inversores particulares (ishares.com/uk/individual/en/products/product-list) —
+    no es un scrape de un tercero, es la fuente oficial del fabricante.
+    """
+    resp = requests.get(ISHARES_PRODUCT_DATA_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _resolver_ticker_preferir_lse(nombre_fondo: str, isin: str) -> tuple[str | None, str | None]:
+    """Resuelve un fondo a un ticker de Yahoo Finance, prefiriendo su cotización en LSE.
+
+    Un mismo ISIN puede cotizar en varias bolsas (Londres, Ámsterdam, Fráncfort, Milán...).
+    yf.Ticker(isin) devuelve una cotización arbitraria, no necesariamente la de Londres —
+    la relevante para un inversor que opera desde una plataforma británica (ej. Hargreaves
+    Lansdown). Buscar por NOMBRE (no por ISIN) sí expone las distintas cotizaciones, así que
+    filtramos esa lista por exchange == "LSE" antes de caer a la resolución directa por ISIN.
+    """
+    try:
+        resultados = yf.Search(nombre_fondo, max_results=10).quotes
+        lse = [r for r in resultados if r.get("exchange") == "LSE"]
+        if lse:
+            return lse[0]["symbol"], "LSE"
+    except Exception:
+        pass
+    try:
+        info = yf.Ticker(isin).info
+        return info.get("symbol"), info.get("exchange")
+    except Exception:
+        return None, None
+
+
+def filtrar_fondos_transparentes(
+    domicilios_validos: tuple[str, ...] = ("Ireland", "United Kingdom", "Luxembourg"),
+    ter_max: float = 0.20,
+    asset_class: str = "Equity",
+    pausa_entre_tickers: float = 0.3,
+) -> tuple[list, list]:
+    """Filtra el catálogo de iShares por vehículo, domicilio y comisión, y calcula
+    el Sharpe ratio de cada ETF resultante a partir de su histórico de precios.
+
+    Filtros de transparencia:
+      1. Vehículo: solo ETFs (productType == ISHARES_FUND_DATA) — se excluyen los
+         fondos indexados tradicionales (BLK_MUTUAL_FUND_DATA) y los ETPs/ETCs.
+      2. Domicilio: solo domicilios_validos. Nota: iShares no domicilia ningún
+         producto en España — solo Irlanda, Reino Unido, Luxemburgo, Alemania y
+         Suiza existen como opciones reales en su catálogo.
+      3. Comisión (TER/OCF) < ter_max, tomado directamente del campo oficial de
+         iShares — si no está disponible, el fondo se descarta (no se estima).
+      4. Clase de activo == asset_class (por defecto Equity, para que el ranking
+         por Sharpe compare fondos con perfiles de riesgo comparables).
+
+    Cálculo del Sharpe ratio: rendimiento anualizado / volatilidad anualizada,
+    ambos calculados sobre 3 años de precios diarios de cierre, con tipo libre
+    de riesgo = 0% (simplificación explícita, no una tasa real del mercado).
+
+    Incluye un filtro de sanidad (-80% a +150% de rendimiento anual plausible)
+    para descartar históricos de precio corruptos o splits mal ajustados, y
+    deduplica por ticker resuelto (dos ISINs con nombres muy similares pueden
+    resolver a la misma cotización por búsqueda de texto).
+
+    Devuelve (ganadores, fallidos), igual que filtrar_acciones_calidad.
+    """
+    catalogo = obtener_universo_ishares()
+
+    candidatos = []
+    for rec in catalogo.values():
+        if rec.get("productType") != "ISHARES_FUND_DATA":
+            continue
+        if rec.get("domicile") not in domicilios_validos:
+            continue
+        if rec.get("aladdinAssetClass") != asset_class:
+            continue
+        ter_ocf = rec.get("ter_ocf")
+        ter_val = ter_ocf.get("r") if isinstance(ter_ocf, dict) else None
+        if ter_val is None or ter_val >= ter_max:
+            continue
+        ticker_local = rec.get("localExchangeTicker")
+        if not ticker_local or ticker_local == "-":
+            continue
+        candidatos.append(
+            {
+                "isin": rec.get("isin"),
+                "name": rec.get("fundName"),
+                "domicile": rec.get("domicile"),
+                "ter": ter_val,
+            }
+        )
+
+    print(f"\n🔍 {len(candidatos)} ETFs candidatos tras filtrar por vehículo, domicilio y TER...")
+
+    ganadores = []
+    fallidos = []
+    vistos = set()
+
+    for i, c in enumerate(candidatos, start=1):
+        try:
+            symbol, listado = _resolver_ticker_preferir_lse(c["name"], c["isin"])
+            if not symbol or symbol in vistos:
+                fallidos.append({"isin": c["isin"], "error": "ticker no resuelto o duplicado"})
+                continue
+
+            info = yf.Ticker(symbol).info
+            if info.get("quoteType") != "ETF":
+                fallidos.append({"isin": c["isin"], "error": f"quoteType={info.get('quoteType')}"})
+                continue
+
+            hist = yf.Ticker(symbol).history(period="3y", interval="1d")
+            if len(hist) < 500:
+                fallidos.append({"isin": c["isin"], "error": f"histórico insuficiente ({len(hist)} filas)"})
+                continue
+
+            rets = hist["Close"].pct_change(fill_method=None).dropna()
+            rendimiento_anual = (1 + rets.mean()) ** 252 - 1
+            volatilidad_anual = rets.std() * (252**0.5)
+
+            if not (-0.80 <= rendimiento_anual <= 1.50) or volatilidad_anual <= 0:
+                fallidos.append({"isin": c["isin"], "error": "rendimiento fuera de rango plausible (dato sospechoso)"})
+                continue
+
+            vistos.add(symbol)
+            ganadores.append(
+                {
+                    "isin": c["isin"],
+                    "ticker": symbol,
+                    "listado_lse": listado == "LSE",
+                    "nombre": info.get("longName") or c["name"],
+                    "domicilio": c["domicile"],
+                    "ter": c["ter"],
+                    "rendimiento_3y": round(rendimiento_anual * 100, 2),
+                    "volatilidad_3y": round(volatilidad_anual * 100, 2),
+                    "sharpe": round(rendimiento_anual / volatilidad_anual, 3),
+                }
+            )
+        except Exception as e:
+            fallidos.append({"isin": c["isin"], "error": f"{type(e).__name__}: {e}"})
+        finally:
+            time.sleep(pausa_entre_tickers)
+
+        if i % 25 == 0:
+            print(f"   ...progreso: {i}/{len(candidatos)} fondos procesados, {len(ganadores)} válidos")
+
+    ganadores.sort(key=lambda x: x["sharpe"], reverse=True)
+    print(f"\n✅ {len(ganadores)} ETFs válidos con Sharpe calculado ({len(fallidos)} descartados/fallidos)")
+    return ganadores, fallidos
+
+
+def generar_informe_fondos(fondos_top: list, universo_nombre: str, ter_max: float = 0.20) -> str:
+    """Genera un comentario cualitativo con Groq sobre el top de ETFs por Sharpe ratio.
+
+    A diferencia de generar_informe (acciones), no usa la herramienta de búsqueda web —
+    son ETFs indexados pasivos, no hay "noticias" por fondo que investigar; el análisis
+    se apoya en los propios datos de rendimiento/volatilidad/TER ya calculados.
+    """
+    client = _groq_client()
+    prompt_analista = f"""
+Eres un analista de inversiones senior especializado en ETFs UCITS europeos.
+
+Hemos filtrado el catálogo público de fondos iShares (BlackRock) aplicando estos
+criterios de transparencia:
+- Vehículo: solo ETFs (no fondos indexados tradicionales ni ETPs/ETCs)
+- Domicilio: Irlanda, Reino Unido o Luxemburgo (jurisdicciones UCITS reconocidas)
+- Comisión (TER/OCF): inferior al {ter_max * 100:.0f}%
+- Clase de activo: Renta Variable (Equity)
+- Cotización preferida: Bolsa de Londres (LSE) cuando existe, por accesibilidad
+  para inversores que operan desde plataformas británicas/europeas
+
+El ranking usa el Sharpe ratio (rendimiento anualizado ÷ volatilidad anualizada,
+tipo libre de riesgo = 0%, calculado sobre 3 años de precios diarios) como medida
+de rentabilidad ajustada al riesgo.
+
+Los {len(fondos_top)} fondos con mejor Sharpe ratio de los últimos 3 años:
+{json.dumps(fondos_top, indent=2, ensure_ascii=False)}
+
+Instrucciones para el análisis:
+1. Para cada fondo, comenta brevemente qué representa su índice/exposición y por
+   qué su combinación de rendimiento/volatilidad ha producido este Sharpe ratio.
+2. Señala cualquier concentración temática o sesgo relevante en el conjunto (ej.
+   sobreexposición a un sector, región o divisa).
+3. Cierra con una conclusión sobre qué tipo de inversor podría encontrar más valor
+   en este ranking, dejando explícito que es un ranking histórico de riesgo/
+   rentabilidad de los últimos 3 años — no una recomendación de compra ni una
+   proyección de rendimiento futuro.
+"""
+    messages = [{"role": "user", "content": prompt_analista}]
+
+    print("\n" + "=" * 70)
+    print("🤖 Agente Groq (gpt-oss-120b) activado: analizando el ranking de fondos...")
+    print("=" * 70 + "\n")
+
+    response = client.chat.completions.create(
+        model="openai/gpt-oss-120b",
+        messages=messages,
+        max_tokens=2000,
+    )
+    contenido = response.choices[0].message.content
+    print(contenido)
+    return contenido
+
+
+def run_pipeline_fondos(
+    output_filename: str = "latest-report-funds.json",
+    universo_nombre: str = "ETFs iShares transparentes (IE/GB/LU, TER<0.20%)",
+    domicilios_validos: tuple[str, ...] = ("Ireland", "United Kingdom", "Luxembourg"),
+    ter_max: float = 0.20,
+    top_n: int = 10,
+) -> str:
+    """Ejecuta el cribado completo de fondos y escribe el JSON de salida.
+
+    Devuelve la ruta del archivo escrito.
+    """
+    if not os.environ.get("GROQ_API_KEY"):
+        raise ValueError("⚠️ La variable de entorno GROQ_API_KEY no está definida.")
+
+    ganadores, fallidos = filtrar_fondos_transparentes(
+        domicilios_validos=domicilios_validos,
+        ter_max=ter_max,
+    )
+    top_fondos = ganadores[:top_n]
+
+    report_text = None
+    if top_fondos:
+        report_text = generar_informe_fondos(top_fondos, universo_nombre, ter_max)
+    else:
+        print("Ningún fondo cumplió los filtros esta semana — se omite la llamada a Groq.")
+
+    output = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "methodology": {
+            "data_source": "iShares (BlackRock) public product-screener API — the same feed that "
+            "powers ishares.com's own retail fund finder",
+            "vehicle": "ETF only (excludes traditional index funds and ETPs/ETCs)",
+            "domicile": list(domicilios_validos),
+            "domicile_note": "iShares has no Spain-domiciled products — only Ireland, UK, "
+            "Luxembourg, Germany and Switzerland exist in their catalogue",
+            "max_ter_ocf_pct": ter_max,
+            "asset_class": "Equity",
+            "listing_preference": "London Stock Exchange (LSE) preferred when available, for "
+            "buyability on UK/European retail platforms",
+            "sharpe_calc": "3-year annualized return ÷ 3-year annualized volatility, from daily "
+            "close prices, risk-free rate assumed 0%",
+            "sanity_filter": "annualized return outside -80%..+150% is treated as corrupt price "
+            "data and discarded, not shown",
+        },
+        "universe_size": len(ganadores) + len(fallidos),
+        "passed_filters": len(ganadores),
+        "funds": top_fondos,
+        "failed_count": len(fallidos),
+        "report": report_text,
+    }
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    output_path = os.path.join(DATA_DIR, output_filename)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
+    print(f"\n💾 Informe escrito en {output_path}")
+    return output_path
 
 
 # ==============================================================================

@@ -1,0 +1,42 @@
+name: Funds Screener (manual)
+
+# Manual trigger only for now — no schedule. Run this a few times via
+# workflow_dispatch and review the output before adding a weekly cron,
+# same rollout approach as the stock screeners.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run funds screener
+        run: python screener_funds.py
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+      - name: Commit updated report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/latest-report-funds.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: funds screener report"
+            git pull --rebase origin main
+            git push
+          fi
