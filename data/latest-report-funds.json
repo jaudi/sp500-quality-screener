@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-31T12:04:14.813449+00:00",
+  "generated_at": "2026-09-02T06:47:47.009263+00:00",
   "methodology": {
     "data_source": "iShares (BlackRock) public product-screener API — the same feed that powers ishares.com's own retail fund finder",
     "vehicle": "ETF only (excludes traditional index funds and ETPs/ETCs)",
@@ -19,26 +19,26 @@
   "passed_filters": 63,
   "funds": [
     {
-      "isin": "IE00BJ5JP097",
-      "ticker": "WFNS.AS",
-      "listado_lse": false,
-      "nombre": "iShares MSCI World Financials Sector Advanced UCITS ETF USD Inc",
-      "domicilio": "Ireland",
-      "ter": 0.18,
-      "rendimiento_3y": 28.27,
-      "volatilidad_3y": 15.18,
-      "sharpe": 1.863
-    },
-    {
       "isin": "IE00BMW42306",
       "ticker": "ESIF.L",
       "listado_lse": true,
       "nombre": "iShares MSCI Europe Financials Sector UCITS ETF",
       "domicilio": "Ireland",
       "ter": 0.18,
-      "rendimiento_3y": 35.71,
-      "volatilidad_3y": 19.21,
-      "sharpe": 1.859
+      "rendimiento_3y": 35.98,
+      "volatilidad_3y": 19.23,
+      "sharpe": 1.871
+    },
+    {
+      "isin": "IE00BJ5JP097",
+      "ticker": "WFNS.AS",
+      "listado_lse": false,
+      "nombre": "iShares MSCI World Financials Sector Advanced UCITS ETF USD Inc",
+      "domicilio": "Ireland",
+      "ter": 0.18,
+      "rendimiento_3y": 28.07,
+      "volatilidad_3y": 15.19,
+      "sharpe": 1.848
     },
     {
       "isin": "IE0002EKOXU6",
@@ -47,42 +47,9 @@
       "nombre": "iShares Russell 1000 Value UCITS ETF USD Acc",
       "domicilio": "Ireland",
       "ter": 0.18,
-      "rendimiento_3y": 20.52,
-      "volatilidad_3y": 12.6,
-      "sharpe": 1.629
-    },
-    {
-      "isin": "IE00BL3J3G74",
-      "ticker": "CSPX.L",
-      "listado_lse": true,
-      "nombre": "iShares Core S&P 500 UCITS ETF USD (Acc)",
-      "domicilio": "Ireland",
-      "ter": 0.12,
-      "rendimiento_3y": 22.15,
-      "volatilidad_3y": 13.92,
-      "sharpe": 1.591
-    },
-    {
-      "isin": "IE000HARJEE2",
-      "ticker": "ISFD.L",
-      "listado_lse": true,
-      "nombre": "iShares Core FTSE 100 UCITS ETF USD Hedged (Acc)",
-      "domicilio": "Ireland",
-      "ter": 0.1,
-      "rendimiento_3y": 17.83,
-      "volatilidad_3y": 11.21,
-      "sharpe": 1.59
-    },
-    {
-      "isin": "IE00BFNM3G45",
-      "ticker": "SDUS.L",
-      "listado_lse": true,
-      "nombre": "iShares MSCI USA Screened UCITS ETF USD (Dist)",
-      "domicilio": "Ireland",
-      "ter": 0.07,
-      "rendimiento_3y": 23.61,
-      "volatilidad_3y": 14.91,
-      "sharpe": 1.584
+      "rendimiento_3y": 19.87,
+      "volatilidad_3y": 12.63,
+      "sharpe": 1.574
     },
     {
       "isin": "IE000R9FA4A0",
@@ -91,9 +58,20 @@
       "nombre": "iShares S&P 500 Scored and Screened UCITS ETF USD (Acc)",
       "domicilio": "Ireland",
       "ter": 0.07,
-      "rendimiento_3y": 21.76,
-      "volatilidad_3y": 13.97,
-      "sharpe": 1.558
+      "rendimiento_3y": 21.8,
+      "volatilidad_3y": 13.98,
+      "sharpe": 1.559
+    },
+    {
+      "isin": "IE00BL3J3G74",
+      "ticker": "CSPX.L",
+      "listado_lse": true,
+      "nombre": "iShares Core S&P 500 UCITS ETF USD (Acc)",
+      "domicilio": "Ireland",
+      "ter": 0.12,
+      "rendimiento_3y": 21.69,
+      "volatilidad_3y": 13.95,
+      "sharpe": 1.554
     },
     {
       "isin": "IE00B52SFT06",
@@ -102,33 +80,55 @@
       "nombre": "iShares VII PLC - iShares MSCI USA ETF USD Acc",
       "domicilio": "Ireland",
       "ter": 0.03,
-      "rendimiento_3y": 22.27,
-      "volatilidad_3y": 14.34,
-      "sharpe": 1.552
+      "rendimiento_3y": 22.2,
+      "volatilidad_3y": 14.36,
+      "sharpe": 1.546
     },
     {
-      "isin": "IE00B3WJKG14",
-      "ticker": "IUIT.L",
+      "isin": "IE00BFNM3G45",
+      "ticker": "SDUS.L",
       "listado_lse": true,
-      "nombre": "iShares S&P 500 Information Technology Sector UCITS ETF USD (Acc)",
-      "domicilio": "Ireland",
-      "ter": 0.15,
-      "rendimiento_3y": 35.1,
-      "volatilidad_3y": 22.77,
-      "sharpe": 1.541
-    },
-    {
-      "isin": "IE00BMXC7V63",
-      "ticker": "UPAD.L",
-      "listado_lse": true,
-      "nombre": "iShares S&P 500 Paris-Aligned Climate UCITS ETF USD Dist",
+      "nombre": "iShares MSCI USA Screened UCITS ETF USD (Dist)",
       "domicilio": "Ireland",
       "ter": 0.07,
-      "rendimiento_3y": 21.64,
-      "volatilidad_3y": 14.29,
-      "sharpe": 1.515
+      "rendimiento_3y": 22.59,
+      "volatilidad_3y": 14.95,
+      "sharpe": 1.511
+    },
+    {
+      "isin": "IE00BDDRF478",
+      "ticker": "IUCM.L",
+      "listado_lse": true,
+      "nombre": "iShares S&P 500 Communication Sector UCITS ETF USD Acc",
+      "domicilio": "Ireland",
+      "ter": 0.15,
+      "rendimiento_3y": 25.55,
+      "volatilidad_3y": 17.4,
+      "sharpe": 1.468
+    },
+    {
+      "isin": "IE00BYXYX745",
+      "ticker": "EUMD.L",
+      "listado_lse": true,
+      "nombre": "iShares MSCI Europe Mid Cap UCITS ETF EUR (Acc)",
+      "domicilio": "Ireland",
+      "ter": 0.15,
+      "rendimiento_3y": 18.37,
+      "volatilidad_3y": 12.67,
+      "sharpe": 1.45
+    },
+    {
+      "isin": "IE00BJ5JP436",
+      "ticker": "WCMS.AS",
+      "listado_lse": false,
+      "nombre": "iShares MSCI World Communication Services Sector Advanced UCITS ETF USD Inc",
+      "domicilio": "Ireland",
+      "ter": 0.18,
+      "rendimiento_3y": 25.56,
+      "volatilidad_3y": 17.76,
+      "sharpe": 1.44
     }
   ],
   "failed_count": 82,
-  "report": "**Análisis de los 10 ETFs iShares UCITS con mayor Sharpe Ratio (últimos 3 años)**  \n\n*(Datos de rendimiento, volatilidad y Sharpe calculados con precios diarios, riesgo‑libre = 0 %).*  \n\n| # | ISIN | Ticker | Cotiza en LSE | Nombre | TER % | Rend. 3 a % | Vol. 3 a % | Sharpe | Comentario breve |\n|---|------|--------|---------------|--------|-------|--------------|-----------|--------|-------------------|\n| 1 | IE00BJ5JP097 | WFNS.AS | No | **iShares MSCI World Financials Sector Advanced UCITS ETF USD Inc** | 0,18 | 28,27 | 15,18 | **1,863** | Replicación del **MSCI World Financials** (≈ 15 % del índice world). El sector financiero se benefició de la reapertura de bancos europeos y norte‑americanos, de la subida de tipos y de menores provisiones de crédito. La combinación de un fuerte retorno relativo y una volatilidad moderada (más baja que el mercado amplio) genera el mejor Sharpe del listado. |\n| 2 | IE00BMW42306 | ESIF.L | Sí | **iShares MSCI Europe Financials Sector UCITS ETF** | 0,18 | 35,71 | 19,21 | **1,859** | Sigue al **MSCI Europe Financials**. El impulso fue aún mayor que en el universo global porque la recuperación del crédito en Europa y la política monetaria más restrictiva impulsaron los márgenes bancarios. La volatilidad es algo superior al fondo mundial, pero el rendimiento sobresaliente compensa, produciendo un Sharpe casi idéntico al anterior. |\n| 3 | IE0002EKOXU6 | R1VL.L | Sí | **iShares Russell 1000 Value UCITS ETF USD Acc** | 0,18 | 20,52 | 12,60 | **1,629** | Exposición al **Russell 1000 Value**, es decir, a 1 000 grandes empresas estadounidenses con características “value” (bajo múltiplo precio‑beneficio, alto dividend yield). En el periodo 2020‑2023 los valores value superaron a los growth, impulsados por una mayor sensibilidad a la subida de tipos y a la rotación sectorial hacia consumo, energía y finanzas. La volatilidad relativamente baja (≈ 12,6 %) eleva el ratio. |\n| 4 | IE00BL3J3G74 | CSPX.L | Sí | **iShares Core S&P 500 UCITS ETF USD (Acc)** | 0,12 | 22,15 | 13,92 | **1,591** | Replica el **S&P 500**, el benchmark de referencia de EE. UU. El ETF combina un retorno sólido (cerca del promedio del mercado estadounidense) con una volatilidad comparable a la del propio índice, lo que da un Sharpe estable y alto. |\n| 5 | IE000HARJEE2 | ISFD.L | Sí | **iShares Core FTSE 100 UCITS ETF USD Hedged (Acc)** | 0,10 | 17,83 | 11,21 | **1,590** | Sigue al **FTSE 100** (las 100 mayores compañías del Reino Unido) pero con cobertura de divisa al USD. La cobertura elimina la volatilidad cambiaria GBP/USD, reduciendo la desviación típica y mejorando el Sharpe pese a un retorno algo menor que el S&P 500. |\n| 6 | IE00BFNM3G45 | SDUS.L | Sí | **iShares MSCI USA Screened UCITS ETF USD (Dist)** | 0,07 | 23,61 | 14,91 | **1,584** | Exposición a **MSCI USA** con filtros ESG (“screened”). El filtro elimina compañías con peores puntuaciones medioambientales, sociales o de gobernanza, manteniendo la mayoría del mercado amplio. El retorno está en línea con el S&P 500, pero la ligera reducción de la volatilidad (por la exclusión de acciones más volátiles) eleva el Sharpe. |\n| 7 | IE000R9FA4A0 | ESPX.AS | No | **iShares S&P 500 Scored and Screened UCITS ETF USD (Acc)** | 0,07 | 21,76 | 13,97 | **1,558** | Variante ESG del **S&P 500** (screened + scoring). Al aplicar criterios de sostenibilidad, el fondo tiende a ponderar más sectores “defensivos” (consumo básico, salud) y a excluir algunos de alta exposición a carbono, lo que suaviza la volatilidad frente al índice puro y genera un Sharpe atractivo. |\n| 8 | IE00B52SFT06 | CSUS.SW | No | **iShares VII PLC – iShares MSCI USA ETF USD Acc** | 0,03 | 22,27 | 14,34 | **1,552** | Replica el **MSCI USA** (similar a SDUS pero sin filtros ESG). El TER extremadamente bajo (0,03 %) ayuda a mejorar el rendimiento neto, mientras que la volatilidad es comparable a la del S&P 500, lo que da un Sharpe competitivo. |\n| 9 | IE00B3WJKG14 | IUIT.L | Sí | **iShares S&P 500 Information Technology Sector UCITS ETF USD (Acc)** | 0,15 | 35,10 | 22,77 | **1,541** | Fondo sectorial de **Tecnología del S&P 500**. El sector IT lideró la recuperación post‑COVID, pero también mostró mayor volatilidad (≈ 22,8 %). El elevado retorno (≈ 35 %) compensa la alta desviación típica, resultando en un Sharpe aún superior al 1,5. |\n|10 | IE00BMXC7V63 | UPAD.L | Sí | **iShares S&P 500 Paris‑Aligned Climate UCITS ETF USD Dist** | 0,07 | 21,64 | 14,29 | **1,515** | Variante climática del **S&P 500** que excluye compañías con alta huella de carbono y pondera más aquellas alineadas con los objetivos de París. El filtro reduce ligeramente la volatilidad y mantiene un retorno cercano al del índice amplio, produciendo un Sharpe razonable. |\n\n---\n\n## 1. Interpretación de los ratios\n\n- **Rendimiento vs. volatilidad**: Los fondos con mayor Sharpe combinan retornos robustos con una dispersión de precios relativamente contenida. En los dos primeros casos (Financials Europe & World) el impulso sectorial fue tan fuerte que el aumento de la volatilidad fue limitado, generando los ratios más altos.  \n- **Efecto de los filtros ESG/Climate**: Los ETFs “screened” y “climate‑aligned” tienden a eliminar empresas más volátiles o con exposición a riesgos regulatorios, lo que reduce la desviación típica y mejora el Sharpe, aunque a costa de un retorno ligeramente inferior al del índice sin filtrar.  \n- **Cobertura de divisa**: El FTSE 100 hedged elimina la fluctuación GBP/USD, lo que se traduce en la volatilidad más baja del listado (11,21 %) y, por tanto, en un Sharpe casi idéntico al del S&P 500 puro.  \n- **TER y retorno neto**: Los ETFs con TER muy bajos (CSUS.SW 0,03 %; CSPX.L 0,12 %) retienen más del retorno bruto del índice, lo que eleva ligeramente su Sharpe respecto a fondos con costes más altos pero con retornos similares.\n\n---\n\n## 2. Concentraciones temáticas y sesgos\n\n| Tipo de sesgo | Observaciones en el ranking |\n|---------------|------------------------------|\n| **Sectorial** | 2 fondos están *exclusivamente* en el sector financiero (World & Europe). 1 fondo está centrado en *Tecnología* (IUIT). 3 fondos usan *screening ESG/Climate*, que tienden a sobre‑ponderar sectores “defensivos” y a excluir energía tradicional. |\n| **Regional** | 8 de 10 fondos están **pesadamente expuestos a EE. UU** (S&P 500, MSCI USA, Russell 1000). Solo 2 fondos ofrecen exposición no‑EEUU: el World Financials (global) y el Europe Financials (Europa). |\n| **Divisa** | La mayoría están denominados en **USD** (todos salvo"
+  "report": "## 1️⃣ Comentario rápido por fondo  \n\n| # | Fondo (ticker) | Índice / exposición | Por qué el Sharpe está alto |\n|---|----------------|--------------------|-----------------------------|\n| 1 | **ESIF.L** – iShares MSCI Europe Financials Sector UCITS ETF | Replicación del **MSCI Europe Financials Index** (banco, seguros, servicios financieros de 15 países europeos). | La exposición a un sector que ha disfrutado de una recuperación de los márgenes bancarios y de una política monetaria más restrictiva (mayor spread de crédito) ha generado un **rendimiento del 35,9 %** en 3 años. La volatilidad (≈19 %) es moderada para un sector cíclico, de ahí el **Sharpe = 1,87**. |\n| 2 | **WFNS.AS** – iShares MSCI World Financials Sector Advanced UCITS ETF (USD Inc) | **MSCI World Financials Index** (banca, seguros y servicios financieros de 23 economías desarrolladas). | Similar al anterior, pero con una cobertura geográfica más amplia (EE. UU., Japón, Canadá…). El retorno de 28 % y la volatilidad algo menor (15 %) producen un **Sharpe = 1,85**. |\n| 3 | **R1VL.L** – iShares Russell 1000 Value UCITS ETF (USD Acc) | **Russell 1000 Value Index** – 1 000 mayores empresas estadounidenses con características “value” (bajo múltiplo precio‑beneficio, alto dividend yield). | El enfoque value ha sido beneficiado por la rotación sectorial hacia rendimientos más estables y por la caída de los múltiplos de crecimiento. Un retorno del 19,9 % con **volatilidad muy baja (12,6 %)** da un **Sharpe = 1,57**. |\n| 4 | **ESPX.AS** – iShares S&P 500 Scored & Screened UCITS ETF (USD Acc) | Sub‑índice **S&P 500 Scored & Screened** que elimina empresas con baja puntuación ESG y alta exposición a controversias. | El filtro ESG ha favorecido a compañías con mejor gobernanza y menor riesgo reputacional, manteniendo la exposición al amplio mercado US. 21,8 % de retorno con **volatilidad de 13,98 %** → **Sharpe = 1,56**. |\n| 5 | **CSPX.L** – iShares Core S&P 500 UCITS ETF (USD Acc) | Replicación del **S&P 500** (las 500 mayores empresas estadounidenses, ponderadas por capitalización). | Es el “benchmark” de equity global de EE. UU. – retorno de 21,7 % y volatilidad de 13,95 % → **Sharpe = 1,55**. La alta liquidez y el bajo TER (0,12 %) refuerzan la rentabilidad ajustada. |\n| 6 | **CSUS.SW** – iShares MSCI USA ETF (USD Acc) | **MSCI USA Index** (todos los valores de gran y mediana capitalización de EE. UU.). | Rendimiento de 22,2 % con volatilidad de 14,36 % → **Sharpe = 1,55**. La exposición total al mercado US, combinada con un TER de solo 0,03 %, maximiza la relación retorno‑riesgo. |\n| 7 | **SDUS.L** – iShares MSCI USA Screened UCITS ETF (USD Dist) | Sub‑índice **MSCI USA Screened** que excluye compañías con bajo puntaje ESG y alta exposición a controversias. | 22,6 % de retorno, volatilidad de 14,95 % → **Sharpe = 1,51**. El filtro ESG reduce la volatilidad “sorpresa” y, junto al bajo TER (0,07 %), eleva el ratio. |\n| 8 | **IUCM.L** – iShares S&P 500 Communication Sector UCITS ETF (USD Acc) | **S&P 500 Communication Services Index** (medios y grandes emisores de telecomunicaciones, medios, internet). | 25,6 % de retorno pero volatilidad más alta (17,4 %). La buena rentabilidad de gigantes como Meta, Alphabet y Netflix compensa la mayor volatilidad, generando **Sharpe = 1,47**. |\n| 9 | **EUMD.L** – iShares MSCI Europe Mid Cap UCITS ETF (EUR Acc) | **MSCI Europe Mid‑Cap Index** (empresas de mediana capitalización de 15 países europeos). | 18,4 % de retorno con volatilidad de 12,7 % → **Sharpe = 1,45**. Las mid‑caps europeas han sido más sensibles a la reactivación económica que a la política monetaria, ofreciendo un buen retorno con riesgo contenido. |\n|10| **WCMS.AS** – iShares MSCI World Communication Services Sector Advanced UCITS ETF (USD Inc) | **MSCI World Communication Services Index** (sector global, excluye compañías con bajo puntaje ESG). | 25,6 % de retorno, volatilidad de 17,8 % → **Sharpe = 1,44**. La exposición a líderes globales del sector (Apple, Microsoft, Google) impulsa el retorno, pero la mayor dispersión geográfica eleva la volatilidad. |\n\n> **Nota rápida sobre TER:** Todos los fondos cumplen el filtro de < 20 % (de hecho, el máximo es 0,18 %); los costes prácticamente no erosionan el rendimiento, lo que ayuda a mantener ratios de Sharpe elevados.\n\n---\n\n## 2️⃣ Concentraciones temáticas / sesgos observados en el top‑10  \n\n| Tema / Sesgo | Observaciones |\n|--------------|----------------|\n| **Geografía – Dominio EE. UU.** | 6 de 10 fondos están totalmente expuestos a EE. UU. (CSPX, CSUS, SDUS, IUCM, R1VL, WCMS). El peso de EE. UU. en el ranking es, por tanto, la principal fuente de retorno. |\n| **Sector financiero** | Los dos primeros fondos son sectoriales de **Financials** (Europa y World). Esto genera una ligera sobre‑exposición al sector bancario, que ha sido muy rentable en el entorno de tipos de interés al alza. |\n| **Sector “Communication Services”** | Dos ETFs (IUCM y WCMS) se centran en este sector, que ha sido volátil pero con altos retornos gracias a la fuerza de los “big‑tech” de medios y internet. |\n| **Style/Factor – Value vs. Screened/ESG** | R1VL (value) y los fondos “Screened” (ESPX, SDUS, WCMS) aparecen en el top, lo que sugiere que los filtros de valoración y ESG han añadido un “buffer” de menor volatilidad sin sacrificar retorno. |\n| **Divisa** | La mayoría cotiza y está denominados en **USD** (8/10). Sólo EUMD está en EUR. Los inversores con exposición a EUR pueden experimentar un riesgo cambiario (USD/EUR) que no está capturado en el cálculo del Sharpe (asume 0 % de riesgo‑libre, pero no elimina el efecto de la divisa). |\n| **Tamaño de empresa** | Predominan **large‑cap** (S&P 500, MSCI USA/World) con única excepción de la exposición mid‑cap europea (EUMD) y del Russell 1000 Value (que incluye también mid‑caps). |\n| **Listados en LSE** | 7/10 están disponibles en la Bolsa de Londres, cumpliendo la preferencia de accesibilidad para inversores del Reino Unido/EU. Los tres que no lo están (WFNS.AS, ESPX.AS, WCMS.AS) sólo cotizan en Euronext‑Amsterdam, pero siguen cumpliendo los criterios de UCITS. |\n\n---\n\n## 3️⃣ Conclusión para el inversor  \n\nEste ranking muestra los **10 ETFs iShares UCITS con mayor relación Sharpe (rendimiento ÷ volatilidad) en los últimos tres años**. La métrica está basada en precios diarios y asume"
 }
