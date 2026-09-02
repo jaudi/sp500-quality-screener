@@ -1,46 +1,9 @@
 {
-  "generated_at": "2026-09-01T11:29:12.679840+00:00",
+  "generated_at": "2026-09-02T06:46:43.523055+00:00",
   "universe_size": 35,
   "analyzed": 35,
-  "passed_filters": 3,
-  "companies": [
-    {
-      "ticker": "AMS.MC",
-      "nombre": "AMADEUS IT GROUP, S.A.",
-      "sector": "Technology",
-      "per": 18.53,
-      "roe": "26.47%",
-      "roa": "9.64%",
-      "deuda_patrimonio": "78.6%",
-      "rsi": 43.72,
-      "precio_actual": 56.14,
-      "ma50": 53.58
-    },
-    {
-      "ticker": "LOG.MC",
-      "nombre": "COMPA...IA DE DISTRIBUCION INTE",
-      "sector": "Industrials",
-      "per": 17.16,
-      "roe": "42.49%",
-      "roa": "2.39%",
-      "deuda_patrimonio": "10.2%",
-      "rsi": 51.66,
-      "precio_actual": 36.04,
-      "ma50": 34.77
-    },
-    {
-      "ticker": "ROVI.MC",
-      "nombre": "LABORATORIOS FARMACEUTICOS ROVI",
-      "sector": "Healthcare",
-      "per": 16.59,
-      "roe": "28.65%",
-      "roa": "9.44%",
-      "deuda_patrimonio": "15.0%",
-      "rsi": 67.44,
-      "precio_actual": 60.05,
-      "ma50": 57.72
-    }
-  ],
+  "passed_filters": 0,
+  "companies": [],
   "failed": [],
-  "report": "**Executive Investment Brief – IBEX 35 “Screen‑Selected” Candidates**  \n*Prepared : 1 Sept 2026 – Senior Investment Analyst*  \n\n---\n\n## 1. Company Snap‑shots (Catalysts vs. Risks)\n\n| Ticker | Company | Sector | Key Fundamentals (screen) | Recent News (≤ 12 mo) – Main Themes |\n|--------|---------|--------|----------------------------|--------------------------------------|\n| **AMS.MC** | **Amadeus IT Group, S.A.** | Technology | **ROE 26.5 %**, **P/E 18.5**, **Debt/Patrimonio 78.6 %** | • **Growth re‑ignition** – Jan 23 2026 TIKR analysis forecasts 8 % YoY revenue growth and a price target of € 82 by Dec 2027, driven by post‑pandemic travel recovery and new “Travel‑Tech” platform roll‑outs.<br>• **Cost‑pressure & leverage** – Oct 2025 commentary flags higher operating costs and the need to manage a debt load that, while still under the 100 % ceiling, is the highest of the three peers.<br>• **Strategic acquisitions** – The firm is integrating two smaller GDS‑type operators to expand its North‑American footprint, a potential upside if synergies materialise. |\n| **LOG.MC** | **Logista Integral, S.A.** | Industrials | **ROE 42.5 %**, **P/E 17.2**, **Debt/Patrimonio 10.2 %** | • **Steady top‑line growth** – Mar 13 2026 Flash research report shows multi‑year revenue expansion, underpinned by the “last‑mile” e‑commerce logistics segment and fuel‑distribution contracts.<br>• **Margin pressure** – Same report notes a dip in net profitability due to macro‑economic headwinds (fuel price volatility, inflation) and higher labour costs.<br>• **Regulatory stability** – No major litigation or antitrust issues reported; the company enjoys long‑term concession contracts for tobacco and fuel distribution. |\n| **ROVI.MC** | **Laboratorios Farmacéuticos Rovi, S.A.** | Healthcare | **ROE 28.7 %**, **P/E 16.6**, **Debt/Patrimonio 15.0 %** | • **Strategic review outcome** – Oct 24 2025 Stockopedia piece reports a 5 % share‑price drop after a “strategic review” of a business unit; the review is expected to lead to either a spin‑off or a sale, potentially unlocking value for the core business.<br>• **Pipeline & generics** – Yahoo Finance (2026) highlights a robust pipeline of generic and specialty products, with recent EU approvals that could boost revenue growth 4‑6 % YoY.<br>• **Market‑wide pressure** – No immediate red‑flag events, but the pharma sector is feeling pricing pressure from national health systems and competition from biosimilars. |\n\n---\n\n## 2. Technical Momentum Assessment  \n\n| Ticker | RSI (14 d) | Price vs. 50‑Day MA | Interpretation |\n|--------|-----------|---------------------|----------------|\n| **AMS.MC** | **43.7** (neutral‑to‑slightly‑weak) | **56.14 > 53.58** (≈ 4.5 % above) | The price is modestly above the 50‑day trend line, confirming an up‑trend, but the RSI indicates limited buying pressure. Momentum is **moderate** – the stock may need a catalyst (e.g., earnings beat) to accelerate. |\n| **LOG.MC** | **51.7** (mid‑range) | **36.04 > 34.77** (≈ 3.5 % above) | Clear short‑term uptrend with a healthy RSI. Momentum is **steady**, supporting the recent revenue‑growth narrative. |\n| **ROVI.MC** | **67.4** (strong) | **60.05 > 57.72** (≈ 3.9 % above) | RSI is well above the 50‑point mid‑line, signalling **strong bullish momentum**. The price is comfortably above the 50‑day MA, but the recent strategic‑review news introduces a short‑term volatility risk. |\n\n*General rule of thumb (for our screen):* **RSI > 60 + price > MA50** = “momentum‑confirmed”; **RSI < 45** = “momentum‑weak, watch for catalyst”.  \n\n- **Rovi** meets the “momentum‑confirmed” profile.  \n- **Logista** sits in the “steady‑momentum” zone.  \n- **Amadeus** is the only one where momentum is **weak‑to‑moderate**.\n\n---\n\n## 3. Conviction Ranking & Rationale  \n\n| Rank | Ticker | Composite Score* | Why |\n|------|--------|-------------------|-----|\n| **1** | **LOG.MC** | **9.3 / 10** | • **Best fundamentals** – ROE > 40 %, ultra‑low debt (10 %).<br>• **Valuation** – P/E ≈ 17, still below the 20‑cap.<br>• **Technical health** – price > MA50 and RSI around 52, indicating a stable up‑trend.<br>• **Catalysts** – expanding e‑commerce logistics, long‑term concessions.<br>• **Risks** – margin compression from macro‑inflation, but manageable given balance‑sheet strength. |\n| **2** | **ROVI.MC** | **8.6 / 10** | • **Solid fundamentals** – low P/E, decent ROE, modest debt.<br>• **Strong technical momentum** (RSI 67, price > MA50).<br>• **Catalyst** – strategic review could unlock value (spin‑off or sale) and a growing generic pipeline.<br>• **Risk** – recent 5 % share‑price dip shows market uncertainty about the review; regulatory pricing pressure remains. |\n| **3** | **AMS.MC** | **7.8 / 10** | • **Good fundamentals** – ROE > 20 %, P/E < 20, but debt at ~79 % (highest of the three).<br>• **Technical** – price above MA50 but RSI only 44, indicating limited current buying enthusiasm.<br>• **Catalyst** – travel‑industry rebound and new tech products could reignite growth.<br>• **Risk** – higher leverage, cost‑inflation, and competitive pressure from other GDS/Travel‑Tech platforms. |\n\n\\* **Composite Score** = weighted average (Fundamentals 50 % + Technical 30 % + Qualitative‑Catalyst 20 %).  \n\n**Overall Conviction:** **Logista Integral (LOG.MC)** emerges as the highest‑conviction pick for a medium‑term (12‑18 mo) overweight position, followed by **Rovi (ROVI.MC)** as a high‑conviction growth‑plus‑value play with a near‑term catalyst risk. **Amadeus (AMS.MC)** remains a solid “hold‑or‑buy‑on‑dip” candidate; investors should monitor debt‑reduction initiatives and wait for a clearer technical breakout before scaling in.\n\n---\n\n## 4. Actionable Recommendations  \n\n| Action | Ticker | Rationale |\n|--------|--------|-----------|\n| **Buy / Increase Position** | **LOG.MC** | Strong balance sheet, attractive valuation, and confirmed up‑trend; aligns with our “quality‑plus‑momentum” mandate. |\n| **Buy – Cautious / Staggered** | **ROVI.MC** | Good fundamentals and momentum, but pending outcome of the strategic review. Consider phased entry (e.g., 50 % now, 50 % after review announcement). |\n| **Watch / Add on Pull‑back** | **AMS.MC** | Fundamentals are acceptable, yet momentum is modest and leverage is higher. Add only on price‑pullbacks (e.g., < 5 % of current level) or after a clear earnings‑beat signal. |\n| **Stop‑Loss / Risk Management** | All | Set stop‑loss at 12‑15 % below entry to protect against sudden sector‑wide shocks (e.g., travel‑industry setbacks, macro‑inflation spikes). |\n\n---\n\n### Closing Note\nThe three screened stocks satisfy the original quantitative filters; the **ranking** above refines the selection by injecting the latest qualitative intelligence and short‑term technical dynamics. **Logista Integral** offers the best risk‑adjusted upside, **Rovi** presents a high‑potential upside with a near‑term catalyst risk, and **Amadeus** remains a solid, albeit less momentum‑charged, component of a diversified IBEX 35 core. Continuous monitoring of earnings releases, debt‑reduction plans (for AMS), and the outcome of Rovi’s strategic review will be essential to validate or adjust these positions."
+  "report": null
 }
