@@ -287,28 +287,32 @@ def generar_informe(empresas_seleccionadas: list, universo_nombre: str, roa_mini
     num_criterios = 6 if roa_minimo is not None else 5
     linea_roa = f"- ROA > {round(roa_minimo * 100)}%\n" if roa_minimo is not None else ""
     prompt_analista = f"""
-Eres un analista de inversiones senior. Hemos filtrado {universo_nombre} usando {num_criterios} criterios:
+You are a senior investment analyst. We have screened {universo_nombre} using {num_criterios} criteria:
 
-Fundamentales:
+Fundamentals:
 - ROE > 20%
 {linea_roa}- P/E < 20
-- Deuda/Patrimonio < 100% (evita empresas con ROE inflado por apalancamiento excesivo)
+- Debt/Equity < 100% (screens out companies whose ROE is inflated by excessive leverage)
 
-Técnicos:
-- RSI (14 días) > 30 (excluye sobreventa/distress, sin tope superior para no penalizar el momentum fuerte)
-- Precio actual por encima de la media móvil de 50 días (confirmación de tendencia alcista)
+Technicals:
+- RSI (14-day) > 30 (excludes oversold/distressed names; no upper bound, so strong momentum is not penalised)
+- Current price above the 50-day moving average (confirms an uptrend)
 
-Empresas seleccionadas:
+Selected companies:
 {json.dumps(empresas_seleccionadas, indent=2)}
 
-Instrucciones para el análisis:
-1. Usa la herramienta de búsqueda para investigar el estado actual y noticias de CADA una de estas empresas.
-2. Genera un informe ejecutivo estructurado que contenga:
-   - Resumen cualitativo de cada empresa (catalizadores de crecimiento vs riesgos actuales).
-   - Evaluación del momentum, apoyándote en el RSI y la posición respecto a la MA50 ya calculados.
-   - Conclusión final con un ranking de convicción fundamentado.
-"""
+Instructions:
+1. Use the search tool to research the current state and recent news for EACH of these companies.
+2. Produce a structured executive report containing:
+   - A qualitative summary of each company (growth catalysts vs current risks).
+   - An assessment of momentum, grounded in the RSI and the position relative to the MA50 already calculated above.
+   - A closing conviction ranking with the reasoning behind it.
 
+Rules:
+- Write the entire report in English.
+- Only state facts you can support from the screening data above or from what the search tool actually returns. Do not invent revenue figures, earnings numbers, partnerships, deal values, drug names or clinical trial details. If the searches return little, say so and keep the analysis to the screened metrics.
+- This is research commentary, not investment advice. Do not recommend buying, selling or holding, and do not suggest position sizes or portfolio weightings.
+"""
     messages = [{"role": "user", "content": prompt_analista}]
 
     print("\n" + "=" * 70)
@@ -533,33 +537,38 @@ def generar_informe_fondos(fondos_top: list, universo_nombre: str, ter_max: floa
     """
     client = _claude_client()
     prompt_analista = f"""
-Eres un analista de inversiones senior especializado en ETFs UCITS europeos.
+You are a senior investment analyst specialising in European UCITS ETFs.
 
-Hemos filtrado el catálogo público de fondos iShares (BlackRock) aplicando estos
-criterios de transparencia:
-- Vehículo: solo ETFs (no fondos indexados tradicionales ni ETPs/ETCs)
-- Domicilio: Irlanda, Reino Unido o Luxemburgo (jurisdicciones UCITS reconocidas)
-- Comisión (TER/OCF): inferior al {ter_max * 100:.0f}%
-- Clase de activo: Renta Variable (Equity)
-- Cotización preferida: Bolsa de Londres (LSE) cuando existe, por accesibilidad
-  para inversores que operan desde plataformas británicas/europeas
+We have screened the public iShares (BlackRock) fund catalogue against these
+transparency criteria:
+- Vehicle: ETFs only (no traditional index funds, no ETPs/ETCs)
+- Domicile: Ireland, United Kingdom or Luxembourg (recognised UCITS jurisdictions)
+- Fee (TER/OCF): below {ter_max * 100:.0f}%
+- Asset class: Equity
+- Preferred listing: London Stock Exchange (LSE) where one exists, for
+  accessibility to investors trading from UK/European platforms
 
-El ranking usa el Sharpe ratio (rendimiento anualizado ÷ volatilidad anualizada,
-tipo libre de riesgo = 0%, calculado sobre 3 años de precios diarios) como medida
-de rentabilidad ajustada al riesgo.
+The ranking uses the Sharpe ratio (annualised return / annualised volatility,
+risk-free rate = 0%, computed over 3 years of daily prices) as the measure of
+risk-adjusted performance.
 
-Los {len(fondos_top)} fondos con mejor Sharpe ratio de los últimos 3 años:
+The {len(fondos_top)} funds with the best 3-year Sharpe ratio:
 {json.dumps(fondos_top, indent=2, ensure_ascii=False)}
 
-Instrucciones para el análisis:
-1. Para cada fondo, comenta brevemente qué representa su índice/exposición y por
-   qué su combinación de rendimiento/volatilidad ha producido este Sharpe ratio.
-2. Señala cualquier concentración temática o sesgo relevante en el conjunto (ej.
-   sobreexposición a un sector, región o divisa).
-3. Cierra con una conclusión sobre qué tipo de inversor podría encontrar más valor
-   en este ranking, dejando explícito que es un ranking histórico de riesgo/
-   rentabilidad de los últimos 3 años — no una recomendación de compra ni una
-   proyección de rendimiento futuro.
+Instructions:
+1. For each fund, briefly comment on what its index/exposure represents and why
+   its return/volatility combination produced this Sharpe ratio.
+2. Flag any thematic concentration or notable bias across the set (for example
+   overexposure to one sector, region or currency).
+3. Close with a conclusion on what kind of investor might find most value in this
+   ranking, stating explicitly that it is a historical 3-year risk/return ranking
+   — not a buy recommendation and not a projection of future performance.
+
+Rules:
+- Write the entire commentary in English.
+- Only state facts supported by the fund data above. Do not invent performance
+  figures, holdings, fund sizes or index details you cannot derive from it.
+- Do not recommend buying, selling or holding, and do not suggest position sizes.
 """
     messages = [{"role": "user", "content": prompt_analista}]
 
@@ -579,7 +588,7 @@ Instrucciones para el análisis:
 
 def run_pipeline_fondos(
     output_filename: str = "latest-report-funds.json",
-    universo_nombre: str = "ETFs iShares transparentes (IE/GB/LU, TER<0.20%)",
+    universo_nombre: str = "transparent iShares ETFs (IE/GB/LU, TER<0.20%)",
     domicilios_validos: tuple[str, ...] = ("Ireland", "United Kingdom", "Luxembourg"),
     ter_max: float = 0.20,
     top_n: int = 10,

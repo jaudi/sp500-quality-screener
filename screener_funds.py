@@ -18,7 +18,7 @@ from common import run_pipeline_fondos
 def main():
     run_pipeline_fondos(
         output_filename="latest-report-funds.json",
-        universo_nombre="ETFs iShares transparentes (IE/GB/LU, TER<0.20%)",
+        universo_nombre="transparent iShares ETFs (IE/GB/LU, TER<0.20%)",
         domicilios_validos=("Ireland", "United Kingdom", "Luxembourg"),
         ter_max=0.20,
         top_n=10,

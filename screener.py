@@ -36,7 +36,7 @@ def main():
     run_pipeline(
         obtener_tickers_fn=obtener_tickers_sp500,
         output_filename="latest-report.json",
-        universo_nombre="el S&P 500",
+        universo_nombre="the S&P 500",
         limite_analisis_default=500,
         roa_minimo=0.12,  # explícito: el S&P 500 sí exige ROA como filtro duro
     )

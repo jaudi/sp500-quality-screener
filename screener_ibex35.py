@@ -39,7 +39,7 @@ def main():
     run_pipeline(
         obtener_tickers_fn=obtener_tickers_ibex35,
         output_filename="latest-report-ibex35.json",
-        universo_nombre="el IBEX 35",
+        universo_nombre="the IBEX 35",
         limite_analisis_default=35,
         # ROA no es un filtro duro aquí: el IBEX 35 está muy cargado de bancos
         # y utilities, sectores donde un ROA bajo es estructural del negocio,
