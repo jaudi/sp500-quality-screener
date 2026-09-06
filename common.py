@@ -16,7 +16,7 @@ import pandas as pd
 import requests
 import yfinance as yf
 from ddgs import DDGS
-from groq import Groq
+from groq import BadRequestError, Groq
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -251,6 +251,36 @@ tools = [
 # ==============================================================================
 # BUCLE AGÉNTICO CON GROQ (GPT-OSS-120B)
 # ==============================================================================
+def _completion_con_reintentos(client, messages: list, usar_tools: bool = True, max_reintentos: int = 3):
+    """Llama a Groq reintentando los fallos de validación de tool-use.
+
+    gpt-oss-120b filtra de vez en cuando sus tokens de canal del formato harmony
+    dentro del nombre de la función (ej. 'buscar_noticias_web<|channel|>commentary'),
+    y Groq rechaza la petición entera con un 400 tool_use_failed. Es un fallo
+    transitorio de generación, no un error de nuestro esquema: reintentar la misma
+    petición suele bastar. Sin esto, una sola tool call malformada tumbaba toda la
+    ejecución semanal.
+
+    usar_tools=False genera la respuesta sin herramientas, como último recurso.
+    """
+    extra = {"tools": tools, "tool_choice": "auto"} if usar_tools else {}
+
+    for intento in range(max_reintentos):
+        try:
+            return client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=messages,
+                max_tokens=3000,
+                **extra,
+            )
+        except BadRequestError as e:
+            if "tool_use_failed" not in str(e) or intento == max_reintentos - 1:
+                raise
+            print(f"⚠️  Tool call malformada rechazada por Groq (intento {intento + 1}/{max_reintentos}) — reintentando...")
+            time.sleep(2**intento)
+
+
+
 def generar_informe(empresas_seleccionadas: list, universo_nombre: str, roa_minimo: float | None = 0.12) -> str:
     client = _groq_client()
     num_criterios = 6 if roa_minimo is not None else 5
@@ -285,13 +315,15 @@ Instrucciones para el análisis:
     print("=" * 70 + "\n")
 
     while True:
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
-            messages=messages,
-            tools=tools,
-            tool_choice="auto",
-            max_tokens=3000,
-        )
+        try:
+            response = _completion_con_reintentos(client, messages)
+        except BadRequestError as e:
+            # Agotados los reintentos: el informe se genera sin búsqueda web antes
+            # que perder la ejecución entera (el cribado ya está hecho).
+            print(f"⚠️  Groq sigue rechazando las tool calls: {e}")
+            print("   Generando el informe sin búsqueda web (fallback sin herramientas).")
+            response = _completion_con_reintentos(client, messages, usar_tools=False)
+            return response.choices[0].message.content
 
         response_message = response.choices[0].message
         tool_calls = response_message.tool_calls
@@ -315,15 +347,20 @@ Instrucciones para el análisis:
                 print(f"🔍 [Web Search] Groq está buscando noticias de: {ticker_busqueda}...")
 
                 info_noticias = buscar_noticias_web(ticker_busqueda)
+            else:
+                # Toda tool call necesita respuesta: si no la añadimos, la siguiente
+                # llamada falla por un tool_call_id huérfano.
+                print(f"⚠️  Herramienta desconocida solicitada por el modelo: {func_name!r}")
+                info_noticias = json.dumps({"error": f"herramienta desconocida: {func_name}"})
 
-                messages.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": tool_call_id,
-                        "name": func_name,
-                        "content": info_noticias,
-                    }
-                )
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call_id,
+                    "name": func_name,
+                    "content": info_noticias,
+                }
+            )
 
 
 # ==============================================================================
@@ -630,7 +667,14 @@ def run_pipeline(
 
     report_text = None
     if empresas_seleccionadas:
-        report_text = generar_informe(empresas_seleccionadas, universo_nombre, roa_minimo)
+        try:
+            report_text = generar_informe(empresas_seleccionadas, universo_nombre, roa_minimo)
+        except Exception as e:
+            # El cribado ya tiene valor por sí solo. Si el agente falla, se escribe
+            # igualmente el JSON con las empresas seleccionadas y report=None, en vez
+            # de perder la ejecución entera y dejar el portal con datos de la semana pasada.
+            print(f"⚠️  El agente no pudo generar el informe: {type(e).__name__}: {e}")
+            print("   Se guardan igualmente los resultados del cribado, sin informe cualitativo.")
     else:
         print("Ninguna empresa cumplió los filtros esta semana — se omite la llamada a Groq.")
 
