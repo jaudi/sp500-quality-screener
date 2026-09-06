@@ -21,7 +21,7 @@ from ddgs import DDGS
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 
-MODELO = "claude-opus-5"
+MODELO = "claude-sonnet-5"
 
 # Tope de vueltas del bucle agéntico. El trabajo corre desatendido cada semana y
 # se factura por token: sin este tope, un modelo que insistiera en buscar podría
