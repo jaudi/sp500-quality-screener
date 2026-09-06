@@ -1,8 +1,8 @@
 """
-S&P 500 Quality Screener — pipeline agéntica con Groq.
+S&P 500 Quality Screener — pipeline agéntica con Claude.
 
 Extrae tickers del S&P 500, aplica un cribado fundamental + técnico,
-y genera un informe cualitativo con un agente Groq (tool-use + búsqueda web).
+y genera un informe cualitativo con un agente Claude (tool-use + búsqueda web).
 El resultado se escribe en data/latest-report.json para ser consumido por
 el portal Next.js (financeplots.com).
 """

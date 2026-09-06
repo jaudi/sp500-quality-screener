@@ -1,9 +1,9 @@
 """
-IBEX 35 Quality Screener — pipeline agéntica con Groq.
+IBEX 35 Quality Screener — pipeline agéntica con Claude.
 
 Extrae los tickers del IBEX 35 desde Wikipedia, aplica el mismo cribado
 fundamental + técnico que el screener del S&P 500 (ver common.py), y genera
-un informe cualitativo con Groq. El resultado se escribe en
+un informe cualitativo con Claude. El resultado se escribe en
 data/latest-report-ibex35.json para ser consumido por el portal Next.js
 (financeplots.com).
 """

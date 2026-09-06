@@ -1,12 +1,12 @@
 """
-Screener de fondos transparentes (ETFs UCITS) — pipeline agéntica con Groq.
+Screener de fondos transparentes (ETFs UCITS) — pipeline agéntica con Claude.
 
 A diferencia de screener.py / screener_ibex35.py (que filtran acciones
 individuales de un índice), este script parte del catálogo público de
 productos iShares, filtra por vehículo (solo ETFs), domicilio (IE/GB/LU) y
 comisión (TER < 0.20%), calcula el Sharpe ratio de cada ETF a partir de su
 histórico de precios de 3 años, y genera un comentario cualitativo con un
-agente Groq sobre el top 10 resultante.
+agente Claude sobre el top 10 resultante.
 
 El resultado se escribe en data/latest-report-funds.json para ser consumido
 por el portal Next.js (financeplots.com).
