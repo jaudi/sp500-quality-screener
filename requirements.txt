@@ -1,6 +1,6 @@
 yfinance
 pandas
-groq
+anthropic
 ddgs
 lxml
 requests

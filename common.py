@@ -3,7 +3,7 @@ Lógica compartida de la pipeline de quality screeners (S&P 500, IBEX 35, ...).
 
 Cada índice tiene su propio script (screener.py, screener_ibex35.py) que solo
 define cómo obtener su lista de tickers; todo lo demás — indicadores técnicos,
-filtro de calidad, búsqueda web y el agente Groq — vive aquí.
+filtro de calidad, búsqueda web y el agente Claude — vive aquí.
 """
 
 import json
@@ -15,18 +15,31 @@ from datetime import datetime, timezone
 import pandas as pd
 import requests
 import yfinance as yf
+import anthropic
 from ddgs import DDGS
-from groq import BadRequestError, Groq
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 
-def _groq_client() -> Groq:
-    """Crea el cliente Groq de forma perezosa (solo cuando hace falta generar el informe)."""
-    api_key = os.environ.get("GROQ_API_KEY")
+MODELO = "claude-opus-5"
+
+# Tope de vueltas del bucle agéntico. El trabajo corre desatendido cada semana y
+# se factura por token: sin este tope, un modelo que insistiera en buscar podría
+# encadenar llamadas indefinidamente.
+MAX_ITERACIONES_AGENTE = 25
+
+
+def _claude_client() -> anthropic.Anthropic:
+    """Crea el cliente Claude de forma perezosa (solo cuando hace falta generar el informe)."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        raise ValueError("⚠️ La variable de entorno GROQ_API_KEY no está definida.")
-    return Groq(api_key=api_key)
+        raise ValueError("⚠️ La variable de entorno ANTHROPIC_API_KEY no está definida.")
+    return anthropic.Anthropic(api_key=api_key)
+
+
+def _texto_de(response) -> str:
+    """Concatena los bloques de texto de una respuesta, ignorando thinking y tool_use."""
+    return "".join(b.text for b in response.content if b.type == "text").strip()
 
 
 # ==============================================================================
@@ -213,7 +226,7 @@ def filtrar_acciones_calidad(
 
 
 # ==============================================================================
-# HERRAMIENTAS Y ESQUEMA TOOL-USE (FORMATO OPENAI/GROQ)
+# HERRAMIENTAS Y ESQUEMA TOOL-USE (FORMATO ANTHROPIC)
 # ==============================================================================
 def buscar_noticias_web(ticker: str) -> str:
     """Herramienta de búsqueda web para recopilar noticias del ticker."""
@@ -229,60 +242,48 @@ def buscar_noticias_web(ticker: str) -> str:
 
 tools = [
     {
-        "type": "function",
-        "function": {
-            "name": "buscar_noticias_web",
-            "description": "Busca noticias recientes, catalizadores financieros y riesgos en la web para un ticker bursátil específico.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "ticker": {
-                        "type": "string",
-                        "description": "El símbolo bursátil a investigar (ej. 'JNJ', 'AAPL', 'SAN.MC').",
-                    }
-                },
-                "required": ["ticker"],
+        "name": "buscar_noticias_web",
+        "description": "Busca noticias recientes, catalizadores financieros y riesgos en la web para un ticker bursátil específico.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "ticker": {
+                    "type": "string",
+                    "description": "El símbolo bursátil a investigar (ej. 'JNJ', 'AAPL', 'SAN.MC').",
+                }
             },
+            "required": ["ticker"],
+            "additionalProperties": False,
         },
+        "strict": True,
     }
 ]
 
 
 # ==============================================================================
-# BUCLE AGÉNTICO CON GROQ (GPT-OSS-120B)
+# BUCLE AGÉNTICO CON CLAUDE
 # ==============================================================================
-def _completion_con_reintentos(client, messages: list, usar_tools: bool = True, max_reintentos: int = 3):
-    """Llama a Groq reintentando los fallos de validación de tool-use.
+def _mensaje(client, messages: list, usar_tools: bool = True):
+    """Una vuelta del bucle agéntico.
 
-    gpt-oss-120b filtra de vez en cuando sus tokens de canal del formato harmony
-    dentro del nombre de la función (ej. 'buscar_noticias_web<|channel|>commentary'),
-    y Groq rechaza la petición entera con un 400 tool_use_failed. Es un fallo
-    transitorio de generación, no un error de nuestro esquema: reintentar la misma
-    petición suele bastar. Sin esto, una sola tool call malformada tumbaba toda la
-    ejecución semanal.
-
-    usar_tools=False genera la respuesta sin herramientas, como último recurso.
+    El SDK de Anthropic ya reintenta por su cuenta los 429 y los 5xx con backoff
+    exponencial, así que aquí no hace falta el reintento manual que necesitaba
+    Groq (gpt-oss-120b colaba tokens del formato harmony dentro del nombre de la
+    función y provocaba un 400 tool_use_failed; ese fallo no existe en Claude).
     """
-    extra = {"tools": tools, "tool_choice": "auto"} if usar_tools else {}
+    extra = {"tools": tools} if usar_tools else {}
 
-    for intento in range(max_reintentos):
-        try:
-            return client.chat.completions.create(
-                model="openai/gpt-oss-120b",
-                messages=messages,
-                max_tokens=3000,
-                **extra,
-            )
-        except BadRequestError as e:
-            if "tool_use_failed" not in str(e) or intento == max_reintentos - 1:
-                raise
-            print(f"⚠️  Tool call malformada rechazada por Groq (intento {intento + 1}/{max_reintentos}) — reintentando...")
-            time.sleep(2**intento)
-
+    return client.messages.create(
+        model=MODELO,
+        max_tokens=16000,
+        thinking={"type": "adaptive"},
+        messages=messages,
+        **extra,
+    )
 
 
 def generar_informe(empresas_seleccionadas: list, universo_nombre: str, roa_minimo: float | None = 0.12) -> str:
-    client = _groq_client()
+    client = _claude_client()
     num_criterios = 6 if roa_minimo is not None else 5
     linea_roa = f"- ROA > {round(roa_minimo * 100)}%\n" if roa_minimo is not None else ""
     prompt_analista = f"""
@@ -311,56 +312,57 @@ Instrucciones para el análisis:
     messages = [{"role": "user", "content": prompt_analista}]
 
     print("\n" + "=" * 70)
-    print("🤖 Agente Groq (gpt-oss-120b) activado: Analizando en tiempo real...")
+    print(f"🤖 Agente Claude ({MODELO}) activado: Analizando en tiempo real...")
     print("=" * 70 + "\n")
 
-    while True:
-        try:
-            response = _completion_con_reintentos(client, messages)
-        except BadRequestError as e:
-            # Agotados los reintentos: el informe se genera sin búsqueda web antes
-            # que perder la ejecución entera (el cribado ya está hecho).
-            print(f"⚠️  Groq sigue rechazando las tool calls: {e}")
-            print("   Generando el informe sin búsqueda web (fallback sin herramientas).")
-            response = _completion_con_reintentos(client, messages, usar_tools=False)
-            return response.choices[0].message.content
+    for _ in range(MAX_ITERACIONES_AGENTE):
+        response = _mensaje(client, messages)
 
-        response_message = response.choices[0].message
-        tool_calls = response_message.tool_calls
+        if response.stop_reason == "refusal":
+            raise RuntimeError("El modelo declinó generar el informe de inversión.")
 
-        if not tool_calls:
+        bloques_tool = [b for b in response.content if b.type == "tool_use"]
+
+        if not bloques_tool:
+            informe = _texto_de(response)
             print("\n" + "=" * 70)
-            print("📊 INFORME FINAL DE INVERSIÓN GENERADO (GROQ):")
+            print("📊 INFORME FINAL DE INVERSIÓN GENERADO (CLAUDE):")
             print("=" * 70 + "\n")
-            print(response_message.content)
-            return response_message.content
+            print(informe)
+            return informe
 
-        messages.append(response_message)
+        # Se reenvía response.content entero, no solo el texto: los bloques de
+        # thinking tienen que volver intactos para que el modelo mantenga su
+        # razonamiento entre vueltas.
+        messages.append({"role": "assistant", "content": response.content})
 
-        for tool_call in tool_calls:
-            func_name = tool_call.function.name
-            func_args = json.loads(tool_call.function.arguments)
-            tool_call_id = tool_call.id
-
-            if func_name == "buscar_noticias_web":
-                ticker_busqueda = func_args.get("ticker")
-                print(f"🔍 [Web Search] Groq está buscando noticias de: {ticker_busqueda}...")
-
-                info_noticias = buscar_noticias_web(ticker_busqueda)
+        resultados = []
+        for bloque in bloques_tool:
+            if bloque.name == "buscar_noticias_web":
+                ticker_busqueda = bloque.input.get("ticker")
+                print(f"🔍 [Web Search] Claude está buscando noticias de: {ticker_busqueda}...")
+                contenido = buscar_noticias_web(ticker_busqueda)
+                es_error = False
             else:
-                # Toda tool call necesita respuesta: si no la añadimos, la siguiente
-                # llamada falla por un tool_call_id huérfano.
-                print(f"⚠️  Herramienta desconocida solicitada por el modelo: {func_name!r}")
-                info_noticias = json.dumps({"error": f"herramienta desconocida: {func_name}"})
+                # Toda tool call necesita respuesta: si no la añadimos, la
+                # siguiente llamada falla por un tool_use_id huérfano.
+                print(f"⚠️  Herramienta desconocida solicitada por el modelo: {bloque.name!r}")
+                contenido = json.dumps({"error": f"herramienta desconocida: {bloque.name}"})
+                es_error = True
 
-            messages.append(
-                {
-                    "role": "tool",
-                    "tool_call_id": tool_call_id,
-                    "name": func_name,
-                    "content": info_noticias,
-                }
-            )
+            resultados.append({
+                "type": "tool_result",
+                "tool_use_id": bloque.id,
+                "content": contenido,
+                "is_error": es_error,
+            })
+
+        # Todos los tool_result van en un único mensaje de usuario.
+        messages.append({"role": "user", "content": resultados})
+
+    raise RuntimeError(
+        f"El agente superó {MAX_ITERACIONES_AGENTE} vueltas sin cerrar el informe."
+    )
 
 
 # ==============================================================================
@@ -523,13 +525,13 @@ def filtrar_fondos_transparentes(
 
 
 def generar_informe_fondos(fondos_top: list, universo_nombre: str, ter_max: float = 0.20) -> str:
-    """Genera un comentario cualitativo con Groq sobre el top de ETFs por Sharpe ratio.
+    """Genera un comentario cualitativo con Claude sobre el top de ETFs por Sharpe ratio.
 
     A diferencia de generar_informe (acciones), no usa la herramienta de búsqueda web —
     son ETFs indexados pasivos, no hay "noticias" por fondo que investigar; el análisis
     se apoya en los propios datos de rendimiento/volatilidad/TER ya calculados.
     """
-    client = _groq_client()
+    client = _claude_client()
     prompt_analista = f"""
 Eres un analista de inversiones senior especializado en ETFs UCITS europeos.
 
@@ -562,15 +564,15 @@ Instrucciones para el análisis:
     messages = [{"role": "user", "content": prompt_analista}]
 
     print("\n" + "=" * 70)
-    print("🤖 Agente Groq (gpt-oss-120b) activado: analizando el ranking de fondos...")
+    print(f"🤖 Agente Claude ({MODELO}) activado: analizando el ranking de fondos...")
     print("=" * 70 + "\n")
 
-    response = client.chat.completions.create(
-        model="openai/gpt-oss-120b",
-        messages=messages,
-        max_tokens=2000,
-    )
-    contenido = response.choices[0].message.content
+    response = _mensaje(client, messages, usar_tools=False)
+
+    if response.stop_reason == "refusal":
+        raise RuntimeError("El modelo declinó generar el comentario de fondos.")
+
+    contenido = _texto_de(response)
     print(contenido)
     return contenido
 
@@ -586,8 +588,8 @@ def run_pipeline_fondos(
 
     Devuelve la ruta del archivo escrito.
     """
-    if not os.environ.get("GROQ_API_KEY"):
-        raise ValueError("⚠️ La variable de entorno GROQ_API_KEY no está definida.")
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise ValueError("⚠️ La variable de entorno ANTHROPIC_API_KEY no está definida.")
 
     ganadores, fallidos = filtrar_fondos_transparentes(
         domicilios_validos=domicilios_validos,
@@ -599,7 +601,7 @@ def run_pipeline_fondos(
     if top_fondos:
         report_text = generar_informe_fondos(top_fondos, universo_nombre, ter_max)
     else:
-        print("Ningún fondo cumplió los filtros esta semana — se omite la llamada a Groq.")
+        print("Ningún fondo cumplió los filtros esta semana — se omite la llamada a Claude.")
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -653,8 +655,8 @@ def run_pipeline(
 
     Devuelve la ruta del archivo escrito.
     """
-    if not os.environ.get("GROQ_API_KEY"):
-        raise ValueError("⚠️ La variable de entorno GROQ_API_KEY no está definida.")
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise ValueError("⚠️ La variable de entorno ANTHROPIC_API_KEY no está definida.")
 
     todos_los_tickers = obtener_tickers_fn()
     limite_analisis = int(os.environ.get("SCREENER_LIMIT", str(limite_analisis_default)))
@@ -676,7 +678,7 @@ def run_pipeline(
             print(f"⚠️  El agente no pudo generar el informe: {type(e).__name__}: {e}")
             print("   Se guardan igualmente los resultados del cribado, sin informe cualitativo.")
     else:
-        print("Ninguna empresa cumplió los filtros esta semana — se omite la llamada a Groq.")
+        print("Ninguna empresa cumplió los filtros esta semana — se omite la llamada a Claude.")
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
