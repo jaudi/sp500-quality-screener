@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T16:36:08.333085+00:00",
+  "generated_at": "2026-09-07T10:58:53.493798+00:00",
   "methodology": {
     "data_source": "iShares (BlackRock) public product-screener API — the same feed that powers ishares.com's own retail fund finder",
     "vehicle": "ETF only (excludes traditional index funds and ETPs/ETCs)",
@@ -16,7 +16,7 @@
     "sanity_filter": "annualized return outside -80%..+150% is treated as corrupt price data and discarded, not shown"
   },
   "universe_size": 145,
-  "passed_filters": 62,
+  "passed_filters": 65,
   "funds": [
     {
       "isin": "IE00BMW42306",
@@ -25,9 +25,9 @@
       "nombre": "iShares MSCI Europe Financials Sector UCITS ETF",
       "domicilio": "Ireland",
       "ter": 0.18,
-      "rendimiento_3y": 36.86,
-      "volatilidad_3y": 19.22,
-      "sharpe": 1.918
+      "rendimiento_3y": 37.37,
+      "volatilidad_3y": 19.24,
+      "sharpe": 1.942
     },
     {
       "isin": "IE00BJ5JP097",
@@ -36,20 +36,9 @@
       "nombre": "iShares MSCI World Financials Sector Advanced UCITS ETF USD Inc",
       "domicilio": "Ireland",
       "ter": 0.18,
-      "rendimiento_3y": 28.49,
+      "rendimiento_3y": 29.32,
       "volatilidad_3y": 15.2,
-      "sharpe": 1.875
-    },
-    {
-      "isin": "IE0002EKOXU6",
-      "ticker": "R1VL.L",
-      "listado_lse": true,
-      "nombre": "iShares Russell 1000 Value UCITS ETF USD Acc",
-      "domicilio": "Ireland",
-      "ter": 0.18,
-      "rendimiento_3y": 20.13,
-      "volatilidad_3y": 12.63,
-      "sharpe": 1.594
+      "sharpe": 1.929
     },
     {
       "isin": "IE000R9FA4A0",
@@ -58,9 +47,20 @@
       "nombre": "iShares S&P 500 Scored and Screened UCITS ETF USD (Acc)",
       "domicilio": "Ireland",
       "ter": 0.07,
-      "rendimiento_3y": 21.95,
+      "rendimiento_3y": 22.74,
       "volatilidad_3y": 13.97,
-      "sharpe": 1.572
+      "sharpe": 1.628
+    },
+    {
+      "isin": "IE0002EKOXU6",
+      "ticker": "R1VL.L",
+      "listado_lse": true,
+      "nombre": "iShares Russell 1000 Value UCITS ETF USD Acc",
+      "domicilio": "Ireland",
+      "ter": 0.18,
+      "rendimiento_3y": 20.49,
+      "volatilidad_3y": 12.63,
+      "sharpe": 1.622
     },
     {
       "isin": "IE00B52SFT06",
@@ -69,20 +69,20 @@
       "nombre": "iShares VII PLC - iShares MSCI USA ETF USD Acc",
       "domicilio": "Ireland",
       "ter": 0.03,
-      "rendimiento_3y": 22.27,
-      "volatilidad_3y": 14.34,
-      "sharpe": 1.553
+      "rendimiento_3y": 22.99,
+      "volatilidad_3y": 14.35,
+      "sharpe": 1.602
     },
     {
-      "isin": "IE00BDDRF478",
-      "ticker": "IUCM.L",
+      "isin": "IE00BFNM3G45",
+      "ticker": "SASU.L",
       "listado_lse": true,
-      "nombre": "iShares S&P 500 Communication Sector UCITS ETF USD Acc",
+      "nombre": "iShares MSCI USA Screened UCITS ETF USD (Acc)",
       "domicilio": "Ireland",
-      "ter": 0.15,
-      "rendimiento_3y": 25.8,
-      "volatilidad_3y": 17.42,
-      "sharpe": 1.481
+      "ter": 0.07,
+      "rendimiento_3y": 23.57,
+      "volatilidad_3y": 14.95,
+      "sharpe": 1.577
     },
     {
       "isin": "IE00BMXC7V63",
@@ -91,44 +91,44 @@
       "nombre": "iShares S&P 500 Paris-Aligned Climate UCITS ETF USD Dist",
       "domicilio": "Ireland",
       "ter": 0.07,
-      "rendimiento_3y": 20.82,
+      "rendimiento_3y": 21.59,
       "volatilidad_3y": 14.32,
-      "sharpe": 1.454
+      "sharpe": 1.508
     },
     {
-      "isin": "IE00BJ5JP436",
-      "ticker": "WCMS.AS",
+      "isin": "IE00BKBF6616",
+      "ticker": "CEUU.AS",
       "listado_lse": false,
-      "nombre": "iShares MSCI World Communication Services Sector Advanced UCITS ETF USD Inc",
+      "nombre": "iShares VII PLC -iShares Core MSCI EMU UCITS ETF USD Hdg Acc",
       "domicilio": "Ireland",
-      "ter": 0.18,
-      "rendimiento_3y": 25.49,
-      "volatilidad_3y": 17.8,
-      "sharpe": 1.432
+      "ter": 0.15,
+      "rendimiento_3y": 21.26,
+      "volatilidad_3y": 14.24,
+      "sharpe": 1.494
+    },
+    {
+      "isin": "IE00BDDRF478",
+      "ticker": "IUCM.L",
+      "listado_lse": true,
+      "nombre": "iShares S&P 500 Communication Sector UCITS ETF USD Acc",
+      "domicilio": "Ireland",
+      "ter": 0.15,
+      "rendimiento_3y": 25.81,
+      "volatilidad_3y": 17.44,
+      "sharpe": 1.479
     },
     {
       "isin": "IE00BYXYX745",
-      "ticker": "EUMD.L",
+      "ticker": "EMID.L",
       "listado_lse": true,
-      "nombre": "iShares MSCI Europe Mid Cap UCITS ETF EUR (Acc)",
+      "nombre": "iShares MSCI Europe Mid Cap UCITS ETF EUR (Dist)",
       "domicilio": "Ireland",
       "ter": 0.15,
-      "rendimiento_3y": 18.12,
-      "volatilidad_3y": 12.67,
-      "sharpe": 1.43
-    },
-    {
-      "isin": "IE00B3WJKG14",
-      "ticker": "IITU.L",
-      "listado_lse": true,
-      "nombre": "iShares S&P 500 Information Technology Sector UCITS ETF USD (Acc)",
-      "domicilio": "Ireland",
-      "ter": 0.15,
-      "rendimiento_3y": 31.51,
-      "volatilidad_3y": 22.22,
-      "sharpe": 1.418
+      "rendimiento_3y": 18.7,
+      "volatilidad_3y": 12.66,
+      "sharpe": 1.477
     }
   ],
-  "failed_count": 83,
-  "report": "# Analysis of Top 10 iShares Equity UCITS ETFs by 3-Year Sharpe Ratio\n\n## 1. Individual Fund Commentary\n\n**1. iShares MSCI Europe Financials Sector UCITS ETF (ESIF.L) — Sharpe 1.918**\nTracks European banks, insurers and diversified financials. It posted the highest return in the set (36.86%) alongside moderate volatility (19.22%), producing the top risk-adjusted result. This reflects the strong multi-year re-rating of European financials, particularly banks benefiting from a higher interest-rate environment.\n\n**2. iShares MSCI World Financials Sector Advanced UCITS ETF (WFNS.AS) — Sharpe 1.875**\nA global equivalent to #1, capturing financials across developed markets. Lower absolute return than the European version (28.49%) but also notably lower volatility (15.2%), giving it a similarly strong Sharpe ratio through risk containment rather than raw return.\n\n**3. iShares Russell 1000 Value UCITS ETF (R1VL.L) — Sharpe 1.594**\nBroad U.S. large-cap value exposure. Its Sharpe ratio comes from the lowest volatility in the top group (12.63%) combined with a solid, unspectacular return (20.13%) — a classic \"steady compounding\" profile typical of value-oriented broad indices.\n\n**4. iShares S&P 500 Scored and Screened UCITS ETF (ESPX.AS) — Sharpe 1.572**\nAn ESG-screened variant of the S&P 500. Return (21.95%) and volatility (13.97%) closely track a standard large-cap US profile, suggesting the screening criteria did not materially alter the risk/return shape versus the parent index.\n\n**5. iShares MSCI USA ETF (CSUS.SW) — Sharpe 1.553**\nA plain-vanilla, ultra-low-cost (0.03% TER) broad US equity exposure. Its performance (22.27% return, 14.34% volatility) is representative of the U.S. market's overall multi-year strength, with Sharpe driven by the breadth/diversification of the index rather than any thematic tilt.\n\n**6. iShares S&P 500 Communication Sector UCITS ETF (IUCM.L) — Sharpe 1.481**\nConcentrated in U.S. communication services (mega-cap media/internet/telecom names). Delivered a high return (25.8%) but also higher volatility (17.42%), reflecting the sector's dependence on a small number of large, growth-sensitive constituents.\n\n**7. iShares S&P 500 Paris-Aligned Climate UCITS ETF (UPAD.L) — Sharpe 1.454**\nA climate-tilted, decarbonization-screened S&P 500 variant. Return (20.82%) and volatility (14.32%) are close to broad US large-cap norms, indicating the Paris-alignment screening did not significantly change the risk/return profile relative to the standard index.\n\n**8. iShares MSCI World Communication Services Sector Advanced UCITS ETF (WCMS.AS) — Sharpe 1.432**\nGlobal version of the communication services theme. Similar return (25.49%) and volatility (17.8%) to its U.S.-focused counterpart (#6), again reflecting sector concentration risk in a narrow set of large media/tech companies.\n\n**9. iShares MSCI Europe Mid Cap UCITS ETF (EUMD.L) — Sharpe 1.43**\nEuropean mid-cap equities. The lowest return in the group (18.12%) is paired with the lowest volatility (12.67%), producing a competitive Sharpe through risk containment rather than performance strength — a pattern distinct from the sector-driven funds above it.\n\n**10. iShares S&P 500 Information Technology Sector UCITS ETF (IITU.L) — Sharpe 1.418**\nU.S. technology sector exposure. Second-highest return in the set (31.51%) but also the highest volatility (22.22%), illustrating the classic high-return/high-risk tech profile — its strong performance was largely offset by elevated swings, placing it last in this top-10 by Sharpe despite strong headline returns.\n\n## 2. Thematic and Concentration Observations\n\n- **U.S. equity dominance**: 7 of the 10 funds have direct or primary exposure to U.S. equities (R1VL.L, ESPX.AS, CSUS.SW, IUCM.L, UPAD.L, WCMS.AS partially, IITU.L), indicating the ranking is heavily skewed toward U.S. market performance over the period.\n- **Sector concentration**: Financials (2 funds), Communication Services (2 funds), and Technology (1 fund) sector-specific ETFs make up half the list. This suggests the period favored concentrated sector bets — particularly financials and mega-cap communication/tech names — over broadly diversified exposures.\n- **Currency exposure**: Most funds are USD-denominated indices (S&P 500-linked, MSCI USA, Russell 1000), meaning EUR/GBP-based investors in this list would have carried material USD currency exposure alongside equity risk.\n- **Domicile homogeneity**: All 10 funds are Ireland-domiciled, consistent with iShares' UCITS structuring preference; this reflects the screening criteria rather than a market signal.\n- **Listing split**: 6 of 10 trade on the LSE; the remaining 4 (WFNS.AS, ESPX.AS, CSUS.SW, WCMS.AS) are listed on Euronext Amsterdam or SIX, meaning UK-based investors would access these via non-LSE venues.\n- **Style note**: The European Mid Cap and Russell 1000 Value funds stand out as the only non-sector, non-thematic broad exposures in the top 10, achieving their Sharpe ranking primarily via lower volatility rather than high returns.\n\n## 3. Conclusion\n\nThis ranking may be of interest to an investor seeking to understand which segments of the equity ETF universe delivered the most favorable **historical** return-per-unit-of-risk over the trailing three years — particularly one already comfortable with sector concentration (financials, communication services, technology) and USD-denominated, U.S.-centric exposure. It could serve as a starting point for further due diligence (e.g., examining underlying index methodology, currency hedging availability, fund size/liquidity, and tracking difference).\n\n**This is strictly a backward-looking 3-year Sharpe ratio ranking based on historical daily price data. It does not constitute a buy, sell, or hold recommendation, nor does it imply that any of these funds will replicate this risk-adjusted performance in the future. Past Sharpe ratios and returns are not indicative of future results.**"
+  "failed_count": 80,
+  "report": "# Commentary on the Top 10 iShares UCITS Equity ETFs by 3-Year Sharpe Ratio\n\n## 1. Fund-by-Fund Notes\n\n**ESIF.L – MSCI Europe Financials Sector (Sharpe 1.942)**\nTracks European banks, insurers and diversified financials. It posted the highest return (37.37%) in the set, but also the highest volatility (19.24%) — the return premium was large enough to more than offset the extra risk, producing the top Sharpe ratio. This is consistent with a rate-driven or re-rating environment being favourable to the financials sector over the period.\n\n**WFNS.AS – MSCI World Financials Sector Advanced (Sharpe 1.929)**\nThe global counterpart to ESIF, financials sector exposure on a worldwide basis. Lower return (29.32%) than ESIF but also meaningfully lower volatility (15.2%), giving it a Sharpe almost identical to the European sector fund — confirming that financials broadly (not just European banks) delivered strong risk-adjusted results in this window.\n\n**ESPX.AS – S&P 500 Scored and Screened (Sharpe 1.628)**\nA US large-cap index modified by ESG/sustainability screens. Return (22.74%) and volatility (13.97%) are both close to plain S&P 500 characteristics, suggesting the screening did not materially distort risk/return versus the broad US market.\n\n**R1VL.L – Russell 1000 Value (Sharpe 1.622)**\nUS large-cap value exposure. Lowest volatility in the entire top-10 (12.63%), which is the main driver of its ranking, since its return (20.49%) is the lowest in the set.\n\n**CSUS.SW – MSCI USA (Sharpe 1.602)**\nBroad-based US equity index, essentially the plain-vanilla large/mid-cap US market. Return and volatility (22.99% / 14.35%) sit close to what a diversified US benchmark would be expected to show, and it has the lowest TER of the group (0.03%).\n\n**SASU.L – MSCI USA Screened (Sharpe 1.577)**\nA screened version of the US market. Metrics are close to CSUS.SW, again indicating the screening criteria did not meaningfully alter the risk/return profile relative to the unscreened US index.\n\n**UPAD.L – S&P 500 Paris-Aligned Climate (Sharpe 1.508)**\nA climate-tilted variant of the S&P 500 designed to align with decarbonisation pathways. Return (21.59%) and volatility (14.32%) are broadly in line with the standard S&P 500 profile, suggesting the climate tilt has not produced a material Sharpe divergence versus other US large-cap funds in this list.\n\n**CEUU.AS – Core MSCI EMU USD Hedged (Sharpe 1.494)**\nEurozone equities with the currency hedged back to USD. Return (21.26%) and volatility (14.24%) reflect Eurozone-specific market conditions with currency-hedging removing EUR/USD fluctuation as a return driver.\n\n**IUCM.L – S&P 500 Communication Sector (Sharpe 1.479)**\nA single-sector US play on communication services. Notably higher volatility (17.44%) than the broad US funds above it, and its return (25.81%) — while higher than most peers — was not enough to compensate for that extra volatility, placing it below the broad-market and financials funds.\n\n**EMID.L – MSCI Europe Mid Cap (Sharpe 1.477)**\nEuropean mid-capitalisation equities. Lowest return in absolute terms among sector/style-tilted funds (18.7%), but volatility (12.66%) is also low, keeping the Sharpe ratio competitive despite the modest return.\n\n## 2. Concentration and Bias Observed\n\n- **US equity dominance:** 6 of the 10 funds (ESPX, R1VL, CSUS, SASU, UPAD, IUCM) are directly linked to US large-cap benchmarks (S&P 500 or Russell 1000 variants), meaning the ranking is heavily tilted toward US market performance over the period rather than offering broad geographic diversification.\n- **Sector concentration:** Three funds (ESIF, WFNS, IUCM) are single-sector products — two in Financials and one in Communication Services — indicating that sector-specific strategies, particularly Financials, performed strongly on a risk-adjusted basis versus diversified regional or global benchmarks.\n- **Financials sector leadership:** The two top-ranked funds by Sharpe are both Financials-sector funds (Europe and World), a clear thematic signal that this sector outperformed on a risk-adjusted basis in the trailing 3-year window covered.\n- **Currency/hedging note:** CEUU.AS is a EUR-underlying, USD-hedged product, differentiating its currency exposure from the other funds, which generally carry unhedged USD or EUR exposure depending on the underlying market.\n- **Listing venue:** Despite the stated LSE preference, 4 of the 10 funds (WFNS.AS, ESPX.AS, CSUS.SW, CEUU.AS) are not LSE-listed in this dataset, listed instead on Euronext Amsterdam or SIX Swiss Exchange, indicating that for these particular ISINs no LSE line was captured in the screen or none exists.\n- **Cost profile:** All 10 funds carry a TER at or below 0.18%, consistent with the sub-0.20% screening threshold, with CSUS.SW as the cheapest (0.03%) and ESIF.L, WFNS.AS and R1VL.L as the most expensive within the group (0.18%).\n\n## 3. Conclusion\n\nThis list may be of interest to an analyst or investor who wants to study which broad equity market segments — by sector, style or region — delivered the strongest **historical** risk-adjusted return over the trailing 3-year period, with a specific lens on low-cost, LSE-accessible UCITS structures where available. The pronounced presence of US large-cap and Financials-sector exposure in the top ranks reflects what happened in this specific historical window and should not be read as a structural or permanent characteristic of these market segments.\n\n**This is strictly a historical 3-year risk/return ranking based on trailing Sharpe ratios. It is not a buy recommendation, not an assessment of fund quality or suitability, and not a projection or forecast of future performance.** Past risk-adjusted returns, including the Sharpe ratios shown, offer no guarantee of similar outcomes going forward, and any investment decision would require independent due diligence beyond the scope of this screen."
 }
