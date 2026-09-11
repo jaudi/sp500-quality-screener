@@ -24,6 +24,8 @@ import math
 import pandas as pd
 import yfinance as yf
 
+import sec_edgar
+
 # ==============================================================================
 # PARÁMETROS DEL MODELO
 # ==============================================================================
@@ -91,6 +93,19 @@ G_MIN_BUSQUEDA, G_MAX_BUSQUEDA = -0.30, 0.60
 G_MODELADO_MIN, G_MODELADO_MAX = -0.15, 0.25
 TOLERANCIA_BISECCION = 1e-7
 MAX_ITERACIONES = 200
+
+# Ejercicios que se promedian para la base del DCF. Arrancar del último año
+# suelto hacía que cualquier rareza puntual de ese ejercicio se propagara a toda
+# la valoración y al crecimiento implícito.
+ANIOS_BASE_NORMALIZADA = 3
+
+# Ventana corta para comprobar si la tendencia larga sigue vigente. Con los 14-17
+# ejercicios de la SEC aparece un riesgo que con 4 años no existía: un ajuste
+# excelente sobre toda la serie puede esconder que el negocio giró hace poco.
+# Ulta ajusta a R² 0,84 sobre catorce años creciendo al 28%, y sin embargo sus
+# últimos ejercicios caen. Proyectar el 28% sería leer la década equivocada.
+ANIOS_TENDENCIA_RECIENTE = 5
+DIVERGENCIA_TENDENCIA_PP = 10.0
 
 
 # ==============================================================================
@@ -194,13 +209,23 @@ def _serie_anual(estado, fila: str) -> list[float]:
     return valores
 
 
-def serie_free_cash_flow(ticker_obj) -> tuple[list[float], str]:
+def serie_free_cash_flow(ticker_obj, ticker: str | None = None) -> tuple[list[float], str]:
     """Devuelve (serie de FCF anual, etiqueta de la fuente usada).
 
-    Se prefiere la fila 'Free Cash Flow' que ya publica yfinance; si no está, se
-    reconstruye como flujo de explotación menos capex (capex viene en negativo,
-    por eso se suma).
+    Primero se intenta la SEC, que da 14-17 ejercicios frente a los 4 de
+    yfinance — la diferencia entre una muestra con la que se puede afirmar algo y
+    otra con la que no. Si la empresa no presenta ante la SEC (todo el IBEX) o su
+    histórico no supera los controles de sec_edgar, se cae a yfinance.
     """
+    if ticker:
+        try:
+            serie_sec, fuente_sec = sec_edgar.serie_free_cash_flow_sec(ticker)
+            if len(serie_sec) >= 3:
+                return serie_sec, fuente_sec
+        except Exception:
+            # La etapa entera no puede caerse porque la SEC no conteste.
+            pass
+
     estado = ticker_obj.cashflow
 
     directo = _serie_anual(estado, "Free Cash Flow")
@@ -543,13 +568,18 @@ def analizar_valoracion(ticker: str, precio_cribado: float | None = None) -> dic
     if divisa_precio and divisa_estados and divisa_precio != divisa_estados:
         raise ValueError(f"currency mismatch: quoted in {divisa_precio}, reports in {divisa_estados}")
 
-    serie_fcf, fuente_fcf = serie_free_cash_flow(ticker_obj)
+    serie_fcf, fuente_fcf = serie_free_cash_flow(ticker_obj, ticker)
     if len(serie_fcf) < 2:
         raise ValueError("fewer than 2 years of free cash flow history")
 
-    fcf_base = serie_fcf[-1]
+    # Base normalizada: la media de los últimos ejercicios en lugar del último
+    # suelto. Arrancar el DCF de un único año hace que cualquier rareza de ese
+    # ejercicio —un cobro extraordinario, un capex aplazado— se propague a toda
+    # la valoración y al crecimiento implícito.
+    ventana = serie_fcf[-ANIOS_BASE_NORMALIZADA:]
+    fcf_base = sum(ventana) / len(ventana)
     if fcf_base <= 0:
-        raise ValueError("latest free cash flow is negative — reverse DCF is not meaningful")
+        raise ValueError("normalised free cash flow base is negative — reverse DCF is not meaningful")
 
     # La tasa se resuelve por empresa, no una vez para toda la tanda: el IBEX
     # reporta en euros y el S&P en dólares, y son curvas distintas.
@@ -568,6 +598,15 @@ def analizar_valoracion(ticker: str, precio_cribado: float | None = None) -> dic
     g_historico = cagr(serie_fcf)
     g_tendencia, r2 = tendencia_log_lineal(serie_fcf)
     historicos = log_crecimientos_interanuales(serie_fcf)
+
+    # ¿Sigue viva esa tendencia? Se reajusta sobre los últimos ejercicios y se
+    # compara. Un ajuste largo y bueno no garantiza que describa el presente.
+    g_reciente, _ = tendencia_log_lineal(serie_fcf[-ANIOS_TENDENCIA_RECIENTE:])
+    tendencia_rota = (
+        g_tendencia is not None
+        and g_reciente is not None
+        and abs(g_tendencia - g_reciente) * 100 >= DIVERGENCIA_TENDENCIA_PP
+    )
 
     # Corroboración con ingresos: si el FCF se dispara pero la facturación no se
     # mueve, el movimiento viene de circulante, de un capex aplazado o de algo
@@ -599,11 +638,25 @@ def analizar_valoracion(ticker: str, precio_cribado: float | None = None) -> dic
             "projecting it would describe the path of the series, not the business"
         )
     else:
-        g_modelado = min(max(g_tendencia, G_MODELADO_MIN), G_MODELADO_MAX)
-        crecimiento_acotado = g_modelado != g_tendencia
+        # Cuando la ventana reciente y la larga no coinciden se proyecta la más
+        # prudente de las dos. El R² largo es lo que acredita que la serie tiene
+        # forma de tendencia; la ventana corta es la que dice a qué ritmo va el
+        # negocio ahora. Ulta ajusta al 28% sobre catorce años pero lleva cinco
+        # creciendo al 1,8%: proyectar el 28% sería leer la década equivocada, y
+        # negarse del todo tiraría una respuesta perfectamente utilizable.
+        base_tendencia = g_tendencia
+        if g_reciente is not None:
+            base_tendencia = min(g_tendencia, g_reciente)
+        g_modelado = min(max(base_tendencia, G_MODELADO_MIN), G_MODELADO_MAX)
+        # Se compara contra base_tendencia, no contra g_tendencia: elegir la
+        # ventana reciente por prudencia no es un recorte de la banda, y tratarlo
+        # como tal cancelaba el DCF de cualquier empresa cuya tendencia corta
+        # fuera más baja que la larga — que son justo las que mejor se pueden
+        # valorar de forma conservadora.
+        crecimiento_acotado = g_modelado != base_tendencia
         if crecimiento_acotado:
             motivo_sin_dcf = (
-                f"trend growth {g_tendencia * 100:.1f}% sits outside the projectable band "
+                f"projectable growth {base_tendencia * 100:.1f}% sits outside the band "
                 f"[{G_MODELADO_MIN * 100:.0f}%, {G_MODELADO_MAX * 100:.0f}%]; any value would be "
                 "a function of that boundary rather than of the company"
             )
@@ -662,6 +715,9 @@ def analizar_valoracion(ticker: str, precio_cribado: float | None = None) -> dic
         "historical_growth_pct": round(g_historico * 100, 2) if g_historico is not None else None,
         "trend_growth_pct": round(g_tendencia * 100, 2) if g_tendencia is not None else None,
         "trend_r2": round(r2, 3) if r2 is not None else None,
+        "trend_recent_pct": round(g_reciente * 100, 2) if g_reciente is not None else None,
+        "trend_broken": tendencia_rota,
+        "fcf_base_normalised": round(fcf_base, 0),
         "revenue_growth_pct": round(g_ingresos * 100, 2) if g_ingresos is not None else None,
         "fcf_vs_revenue_divergence_pp": divergencia_pp,
         "modelled_growth_pct": round(g_modelado * 100, 2) if g_modelado is not None else None,
