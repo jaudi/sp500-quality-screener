@@ -91,6 +91,27 @@ def calcular_indicadores_tecnicos(ticker: str) -> dict | None:
 # ==============================================================================
 # FILTRO DE CALIDAD — FUNDAMENTAL + TÉCNICO (YFINANCE)
 # ==============================================================================
+# Yahoo devuelve algunos shortName rotos: truncados a 31 caracteres y con las
+# letras no ASCII sustituidas por tres puntos literales. LOG.MC llega como
+# "COMPA...IA DE DISTRIBUCION INTE" — 0x2e 0x2e 0x2e donde debería ir la "Ñ".
+# El destrozo viene ya hecho dentro de la respuesta de yfinance, así que no es
+# un problema de codificación nuestro y no se arregla decodificando distinto.
+# longName sí llega limpio, pero no siempre es el nombre que queremos enseñar
+# (el de LOG.MC es "Logista Integral, S.A.", que no es la razón social), así
+# que los conocidos se fijan a mano aquí. Se aplica después de la consulta a
+# yfinance; cualquier ticker que no esté en el mapa conserva lo que devuelva
+# Yahoo, así que añadir uno nuevo no toca el resto de la pipeline.
+NOMBRES_CORREGIDOS = {
+    "ACS.MC": "ACS, Actividades de Construcción y Servicios, S.A.",
+    "ANE.MC": "Corporación Acciona Energías Renovables, S.A.",
+    "BBVA.MC": "Banco Bilbao Vizcaya Argentaria, S.A.",
+    "IAG.MC": "International Consolidated Airlines Group, S.A.",
+    "LOG.MC": "Compañía de Distribución Integral Logista Holdings, S.A.",
+    "ROVI.MC": "Laboratorios Farmacéuticos Rovi, S.A.",
+    "SLR.MC": "Solaria Energía y Medio Ambiente, S.A.",
+}
+
+
 def obtener_info_con_reintentos(ticker: str, max_reintentos: int = 3):
     """
     Envuelve ticker_obj.info con reintentos + backoff exponencial.
@@ -185,7 +206,7 @@ def filtrar_acciones_calidad(
             ganadores.append(
                 {
                     "ticker": t,
-                    "nombre": info.get("shortName", t),
+                    "nombre": NOMBRES_CORREGIDOS.get(t, info.get("shortName", t)),
                     "sector": info.get("sector", "N/A"),
                     "per": round(pe, 2),
                     "roe": f"{round(roe * 100, 2)}%",
@@ -302,7 +323,7 @@ Technicals:
 - Current price above the 50-day moving average (confirms an uptrend)
 
 Selected companies:
-{json.dumps(empresas_seleccionadas, indent=2)}
+{json.dumps(empresas_seleccionadas, indent=2, ensure_ascii=False)}
 
 Instructions:
 1. Use the search tool to research the current state and recent news for EACH of these companies.
