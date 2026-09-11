@@ -861,8 +861,8 @@ def run_pipeline(
             "projected_growth_band_pct": [valuation.G_MODELADO_MIN * 100, valuation.G_MODELADO_MAX * 100],
             "probability": f"P(growth >= implied growth) under a Student-t fitted to the company's own year-on-year FCF growth in log space. Withheld entirely above a log stdev of {valuation.LOG_STDEV_MAX_PUBLICABLE}, where it would be indistinguishable from a coin flip.",
             "known_limits": [
-                "Typically 3 year-on-year growth observations per company — yfinance exposes only 4-5 annual statements. Every probability is a small-sample estimate and is published as a range.",
-                "A 4-year FCF window can catch a trough, a spike or both and mistake it for a trend. The R2 test is the guard against this, not a cure.",
+                "History depth is uneven. SEC filings give US companies 14-17 years (16 growth observations for Adobe), but that source only covers SEC filers, so the IBEX screener and any company whose filing history has gaps falls back to yfinance's 4 years — 3 observations. Each company's fcf_source and probability.observations say which it got, and every probability is published as a range rather than a point.",
+                "A short FCF window can catch a trough, a spike or both and mistake it for a trend, and a long one can fit an earlier version of the company beautifully. The R2 test guards the first, and projecting the lower of the long-run and recent trends guards the second. Neither is a cure.",
                 "Terminal growth is a single 2.5% applied to every business regardless of its long-run ceiling; dcf_terminal_value_share_pct shows how much of each valuation rests on it.",
                 "The model sees free cash flow only — no revenue detail, margins, guidance or segments. A one-off legal settlement, licensing payment or deferred capex is indistinguishable from a genuine trend change, which is why revenue growth is carried alongside as a corroboration check.",
                 "Levered FCF is compared directly against market cap with no net-debt bridge — a deliberate simplification for data robustness across 500 tickers.",
