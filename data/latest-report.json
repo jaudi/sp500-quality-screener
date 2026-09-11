@@ -1,58 +1,222 @@
 {
-  "generated_at": "2026-09-07T11:55:54.018372+00:00",
+  "generated_at": "2026-09-11T17:10:42.901230+00:00",
   "universe_size": 503,
   "analyzed": 500,
   "passed_filters": 4,
   "companies": [
     {
-      "ticker": "ADBE",
-      "nombre": "Adobe Inc.",
-      "sector": "Technology",
-      "per": 15.25,
-      "roe": "62.95%",
-      "roa": "19.93%",
-      "deuda_patrimonio": "61.4%",
-      "rsi": 57.51,
-      "precio_actual": 266.51,
-      "ma50": 248.85
-    },
-    {
       "ticker": "CF",
       "nombre": "CF Industries Holdings, Inc.",
       "sector": "Basic Materials",
-      "per": 9.89,
+      "per": 9.9,
       "roe": "29.87%",
       "roa": "12.93%",
       "deuda_patrimonio": "40.5%",
-      "rsi": 71.26,
-      "precio_actual": 133.35,
-      "ma50": 120.77
+      "rsi": 55.82,
+      "precio_actual": 133.42,
+      "ma50": 123.09
     },
     {
       "ticker": "INCY",
       "nombre": "Incyte Corporation",
       "sector": "Healthcare",
-      "per": 16.15,
+      "per": 15.6,
       "roe": "30.67%",
       "roa": "16.83%",
       "deuda_patrimonio": "0.6%",
-      "rsi": 57.07,
-      "precio_actual": 126.75,
-      "ma50": 120.81
+      "rsi": 38.69,
+      "precio_actual": 122.47,
+      "ma50": 121.62
     },
     {
       "ticker": "NEM",
       "nombre": "Newmont Corporation",
       "sector": "Basic Materials",
-      "per": 16.15,
+      "per": 15.94,
       "roe": "25.91%",
       "roa": "15.75%",
       "deuda_patrimonio": "15.8%",
-      "rsi": 58.39,
-      "precio_actual": 128.09,
-      "ma50": 106.94
+      "rsi": 42.64,
+      "precio_actual": 126.41,
+      "ma50": 109.58
+    },
+    {
+      "ticker": "ULTA",
+      "nombre": "Ulta Beauty, Inc.",
+      "sector": "Consumer Cyclical",
+      "per": 19.64,
+      "roe": "46.12%",
+      "roa": "14.84%",
+      "deuda_patrimonio": "95.5%",
+      "rsi": 57.06,
+      "precio_actual": 539.78,
+      "ma50": 511.93
     }
   ],
   "failed": [],
-  "report": "# Executive Research Report: S&P 500 Quality-Momentum Screen\n\n**Screen methodology:** Fundamentals (ROE > 20%, ROA > 12%, P/E < 20, Debt/Equity < 100%) combined with technical confirmation (RSI-14 > 30, price above 50-day MA). Four names cleared all six filters: ADBE, CF, INCY, NEM.\n\n*Note: web search results were generally thin on hard financial detail (no specific revenue/earnings figures were independently verifiable beyond what is cited below). Commentary is therefore grounded primarily in the screening metrics, supplemented only by what the searches explicitly returned.*\n\n---\n\n## 1. Adobe Inc. (ADBE) — Technology\n\n**Fundamentals:** PER 15.25x, ROE 62.95%, ROA 19.93%, Debt/Equity 61.4%. Adobe stands out with by far the highest ROE and ROA in the group, combined with the lowest valuation multiple (PER) — an unusual combination suggesting the market is pricing the stock cautiously relative to its profitability.\n\n**News/context:** Search results returned only generic aggregator listings (MarketBeat, Yahoo Finance, Zacks-style analysis reports) with no substantive, verifiable catalyst or risk detail. No specific growth drivers or risks can be confirmed beyond what is publicly known as a large-cap software company; nothing found in the search should be treated as confirmed news.\n\n**Momentum:** RSI 57.51 — neutral-to-firm, no overbought signal. Price ($266.51) is well above the 50-day MA ($248.85), a gap of roughly 7%, indicating a confirmed, non-extreme uptrend.\n\n**Assessment:** Strongest fundamental profile in the group (efficiency + cheapest multiple) paired with a healthy but unstretched technical trend. The lack of substantive news flow is itself notable — it implies the recent price strength is not being driven by an identifiable headline catalyst that we can confirm from this search.\n\n---\n\n## 2. CF Industries Holdings, Inc. (CF) — Basic Materials\n\n**Fundamentals:** PER 9.89x, ROE 29.87%, ROA 12.93% (just above the 12% threshold), Debt/Equity 40.5% (low leverage). Cheapest valuation multiple among the four names.\n\n**News/context:** Reporting indicates CF has broken ground on the \"Blue Point One\" low-carbon ammonia project, described as a $3.7 billion investment targeted at 1.4 million metric tons of annual capacity by 2029 — a multi-year capacity-expansion catalyst, though it is a long-dated project with execution and funding risk over that horizon. Separate coverage notes CF shares have rallied alongside the broader fertilizer group, citing commodity-cycle optimism, shifting natural gas input costs, crop-planting expectations, and global food-security narratives — all factors that make CF's earnings sensitive to external commodity and energy-price cycles rather than purely company-specific execution.\n\n**Momentum:** RSI 71.26 — the highest reading in the group and in overbought territory (commonly considered >70). Price ($133.35) sits meaningfully above the 50-day MA ($120.77), a roughly 10% premium — the largest gap of the four names in absolute technical extension.\n\n**Assessment:** Attractive statistical valuation and strong ROE, but the combination of overbought RSI and sector/commodity-price dependency (natural gas costs, fertilizer pricing cycles) introduces the most technical and cyclical risk in the group.\n\n---\n\n## 3. Incyte Corporation (INCY) — Healthcare\n\n**Fundamentals:** PER 16.15x, ROE 30.67%, ROA 16.83%, Debt/Equity 0.6% — by a wide margin the least-levered balance sheet in the group, essentially debt-free.\n\n**News/context:** Reporting cited indicates Incyte beat Q1 revenue estimates (a $1.27B quarterly revenue figure was cited in the search result) and referenced pipeline updates including Phase 3 data in a dermatology indication (vitiligo), described in the source as positive. A separate piece notes the stock has returned approximately 88% over the trailing three years and flags a valid question of whether recent gains already reflect much of the good news — i.e., a caution that further upside may be more limited after a strong run. These figures come directly from search snippets and should be treated as reported by those sources rather than independently verified.\n\n**Momentum:** RSI 57.07 — neutral, comfortably below overbought levels. Price ($126.75) is modestly above the 50-day MA ($120.81), roughly a 5% premium — the mildest technical extension in the group, suggesting a steadier, less parabolic uptrend.\n\n**Assessment:** Combines a pristine balance sheet with credible reported earnings and pipeline news flow, and the least-stretched technical setup. The main flagged risk from the search results is valuation/expectations risk after a multi-year run-up, rather than a fundamental or balance-sheet concern.\n\n---\n\n## 4. Newmont Corporation (NEM) — Basic Materials\n\n**Fundamentals:** PER 16.15x, ROE 25.91%, ROA 15.75%, Debt/Equity 15.8% — second-lowest leverage in the group.\n\n**News/context:** Multiple sources point to a strong operational and stock-price run: one source cites a 34.5% stock jump in August and a reported record $2.2 billion in quarterly free cash flow, with analysts described as broadly optimistic (though one source cautions against relying solely on broker price targets). Another source references an operational decision point at the \"Red Chris\" project later in the year as a potential catalyst, framed as balancing potential mine-life upside against unspecified execution risk. A third source cites a much larger longer-term gain (57.8% since an \"institutional outlier inflow signal\" in October 2025) — a claim that is not independently verifiable from these snippets and should be treated as unconfirmed color rather than fact. As a gold miner, Newmont's underlying earnings and cash flow remain inherently tied to gold price movements, which is a structural risk not addressed in the search results.\n\n**Momentum:** RSI 58.39 — neutral-to-firm, in line with ADBE and INCY. Price ($128.09) is well above the 50-day MA ($106.94) — a roughly 20% premium, the largest technical extension by far in the group, indicating a very strong recent uptrend that has moved a long way from its own trend average.\n\n**Assessment:** Strong reported cash generation and low leverage are positives, but the stock's technical position is the most extended of the four (price ~20% above its 50-day MA), and its earnings power remains fundamentally geared to gold prices — an external variable outside company control.\n\n---\n\n## Comparative Momentum Snapshot\n\n| Ticker | RSI(14) | Price vs MA50 | Technical Read |\n|---|---|---|---|\n| INCY | 57.07 | +4.9% | Mildest, steadiest uptrend |\n| ADBE | 57.51 | +7.1% | Healthy uptrend, not extended |\n| NEM | 58.39 | +19.8% | Uptrend confirmed but very extended |\n| CF | 71.26 | +10.4% | Overbought RSI + extended price |\n\n---\n\n## Closing Conviction Ranking\n\nThis ranking reflects relative confidence in the *combination* of fundamental quality and technical durability, based solely on the screened data and the limited, largely unverifiable news color retrieved above. It is a research ordering, not a recommendation to take any investment action.\n\n**1. Adobe (ADBE)** — Highest ROE/ROA by a wide margin, cheapest multiple in the group, and technical trend that is confirmed (price > MA50) but not overbought (RSI ~58, no extreme extension). The combination of superior profitability metrics and the least-stretched valuation is the strongest overall fundamental-technical fit, even though no specific fresh catalyst could be confirmed from the search.\n\n**2. Incyte (INCY)** — Essentially debt-free balance sheet, solid ROE/ROA, and the most modest, least-extended technical setup (RSI ~57, only ~5% above MA50). Reported earnings-beat and pipeline news flow are constructive, tempered only by the caution (from search results) that a multi-year rally may already price in good news.\n\n**3. CF Industries (CF)** — Attractive valuation (lowest PER) and strong ROE/low leverage, but ROA is the weakest of the four (just above the screen threshold) and the technical picture is the most concerning: RSI at 71.26 is in overbought territory, and the stock is meaningfully extended above its MA50. Earnings are also more exposed to external commodity/input-cost cycles based on the news retrieved.\n\n**4. Newmont (NEM)** — Solid fundamentals and low leverage, and reported cash-flow strength is a positive data point, but the stock's price is roughly 20% above its 50-day moving average — the most extended technical position in the group — and its earnings remain structurally tied to gold prices, a factor outside the company's control. The scale of reported recent gains (34.5%–57.8% depending on source) also raises the question of how much good news is already reflected in the price.\n\n---\n\n*Disclaimer: This report is for research and informational purposes only. It does not constitute investment advice, and no recommendation is made to buy, sell, or hold any security, nor is any position sizing suggested. All figures are drawn from the provided screening data or explicitly from search tool results as cited; where information could not be verified, this has been stated explicitly.*"
+  "report": "# S&P 500 Screen — Executive Research Report\n**Screen criteria:** ROE >20%, ROA >12%, P/E <20, Debt/Equity <100%, RSI(14) >30, Price > 50-day MA\n\n*Note on sourcing: Web search results for this batch were generally thin — mostly directory/quote-page listings rather than substantive news articles. Where a search snippet contained specific, attributable information, it is cited and flagged as coming from a search snippet (secondary source, not independently verified here). Where searches returned nothing of substance (notably NEM), the analysis relies solely on the screening data provided.*\n\n---\n\n## 1. CF Industries Holdings (CF) — Basic Materials\n\n**Screening profile:** P/E 9.9 (cheapest in the group), ROE 29.9%, ROA 12.9%, D/E 40.5% (moderate leverage), RSI 55.8, price $133.42 vs. MA50 $123.09 (+8.4% above trend).\n\n**Qualitative summary:** CF is a nitrogen/fertilizer producer, a sector whose earnings are typically tied to agricultural demand cycles and natural gas input costs. A search snippet indicated the stock rose sharply (~18%) post-earnings despite a headline earnings miss, which — if accurate — suggests the market may be looking through a near-term miss toward other factors (e.g., guidance, capital returns, or commodity price expectations). This detail comes from a single snippet and was not corroborated by further detail, so it should be treated as directional color rather than a confirmed catalyst. No specific growth catalysts or risk drivers (e.g., natural gas price trends, capacity additions) were returned in enough detail to state as fact.\n\n**Momentum assessment:** RSI of 55.8 sits in a neutral-to-firm zone — comfortably above the oversold threshold (30) without being overbought (>70), indicating room for continuation in either direction without an obvious extreme reading. The stock trading 8.4% above its 50-day MA is the largest gap in the group, consistent with an established uptrend, though this also means CF is technically furthest extended from its short-term trendline among the four names.\n\n**Risks visible in the data:** Basic Materials/commodity-linked earnings are inherently cyclical, which is not captured by the trailing fundamental ratios (low P/E may reflect market expectations of normalizing/lower future earnings rather than pure undervaluation).\n\n---\n\n## 2. Incyte Corporation (INCY) — Healthcare\n\n**Screening profile:** P/E 15.6, ROE 30.7% (second-highest), ROA 16.8% (highest in group), D/E 0.6% (essentially unlevered — the strongest balance sheet in the set), RSI 38.7 (lowest in group, closest to the oversold threshold), price $122.47 vs. MA50 $121.62 (+0.7%, the smallest margin above trend).\n\n**Qualitative summary:** Search snippets referenced \"strong earnings momentum,\" an \"expanding drug pipeline,\" and a cited year-over-year revenue increase, along with an upcoming data readout tied to a named clinical candidate. Because these figures originate from a single aggregator snippet and could not be cross-verified in this research pass, they are flagged as unconfirmed secondary-source claims rather than established fact. What is verifiable from the screen itself is that INCY combines high capital efficiency (ROA 16.8%, ROE 30.7%) with essentially no financial leverage — an unusually clean balance sheet for the group.\n\n**Momentum assessment:** At RSI 38.7, INCY is the weakest momentum name in the cohort — still above the 30 oversold cutoff (so it passes the filter) but noticeably closer to it than the other three. Combined with the price sitting only marginally (0.7%) above its 50-day MA, this suggests the uptrend is the least confirmed/most fragile of the group; a modest pullback could put the stock below its MA50 and/or into oversold territory.\n\n**Risks visible in the data:** Pharma/biotech names are subject to binary event risk (clinical/regulatory readouts) that is not reflected in trailing fundamental ratios; the weak momentum reading may reflect the market pricing in uncertainty ahead of such events, though specifics could not be confirmed here.\n\n---\n\n## 3. Newmont Corporation (NEM) — Basic Materials\n\n**Screening profile:** P/E 15.9, ROE 25.9%, ROA 15.75%, D/E 15.8% (lowest leverage in the group), RSI 42.6, price $126.41 vs. MA50 $109.58 (+15.4%, by far the largest gap above trend in the group).\n\n**Qualitative summary:** Search results for NEM returned only generic quote/aggregator listing pages with no substantive news content, catalysts, or risk commentary. As such, no qualitative narrative beyond the screening metrics can be responsibly offered. From the data alone: NEM is a gold miner with low leverage (15.8% D/E) and solid capital returns (ROA 15.75%, ROE 25.9%), sitting at a mid-teens P/E.\n\n**Momentum assessment:** RSI of 42.6 is neutral, comfortably clear of oversold levels. The standout technical feature is the 15.4% gap between price and MA50 — the widest spread in the group — indicating a strong, extended uptrend. This could reflect a genuine trend (e.g., gold price strength) but also means NEM is statistically the most extended from its short-term average among the four names, which can imply elevated short-term reversion risk.\n\n**Risks visible in the data:** As a gold miner, NEM's fundamentals are highly sensitive to gold price movements, which are not captured in the trailing ratios; no company-specific operational or news risk could be sourced in this pass.\n\n---\n\n## 4. Ulta Beauty, Inc. (ULTA) — Consumer Cyclical\n\n**Screening profile:** P/E 19.64 (highest in group, closest to the 20 cutoff), ROE 46.1% (by far the highest in the group), ROA 14.8%, D/E 95.5% (highest leverage in the group, near the 100% screen limit), RSI 57.1 (highest in group), price $539.78 vs. MA50 $511.93 (+5.4%).\n\n**Qualitative summary:** Search snippets referenced an ~8-10% share-price decline tied to fiscal-year outlook/guidance commentary, and separately a ~4% single-day drop attributed to \"slower comps\" alongside a reported EPS figure and sales figure for a recent quarter. These are cited as reported in search snippets and were not independently re-verified here; if accurate, they suggest the market has recently reacted negatively to forward guidance and decelerating comparable-store sales trends even as trailing profitability metrics (ROE 46%) remain strong. It's worth noting the elevated ROE is likely flattered by the company's comparatively higher leverage (D/E 95.5%, near the screen's 100% ceiling) relative to peers in this set — a dynamic the screen is explicitly designed to flag rather than fully exclude.\n\n**Momentum assessment:** RSI of 57.1 is the highest in the group, and price is 5.4% above the 50-day MA — both consistent with a confirmed uptrend at the time of the screen. Notably, this technical strength sits alongside snippet references to negative guidance/comp reactions, which may indicate the stock has since stabilized or that the technical snapshot predates those news items; the data available here cannot resolve that timing question definitively.\n\n**Risks visible in the data:** Highest leverage in the group (95.5% D/E) means ROE is more leverage-assisted than for the other three names; highest P/E (19.64) leaves the least valuation cushion versus the group; consumer-discretionary retail is also inherently more sensitive to comp-sales and consumer-spending trends, consistent with the guidance-related snippets noted above.\n\n---\n\n## Comparative Snapshot\n\n| Ticker | P/E | ROE | ROA | D/E | RSI | % above MA50 |\n|---|---|---|---|---|---|---|\n| CF | 9.9 | 29.87% | 12.93% | 40.5% | 55.82 | +8.4% |\n| INCY | 15.6 | 30.67% | 16.83% | 0.6% | 38.69 | +0.7% |\n| NEM | 15.94 | 25.91% | 15.75% | 15.8% | 42.64 | +15.4% |\n| ULTA | 19.64 | 46.12% | 14.84% | 95.5% | 57.06 | +5.4% |\n\n---\n\n## Closing Conviction Ranking (Descending)\n\nThis ranking reflects the internal consistency of each name's fundamental and technical profile as measured by the screen, **not** a recommendation to take any investment action.\n\n**1. CF Industries (CF)** — Combines the lowest valuation multiple in the group (P/E 9.9) with strong ROE/ROA, moderate leverage (40.5%), and a confirmed, non-extreme momentum reading (RSI 55.8, mid-range). The balance between valuation, profitability, and leverage appears the most evenly matched of the four on the metrics available.\n\n**2. Newmont (NEM)** — Lowest leverage in the group (15.8% D/E) alongside solid ROE/ROA and a mid-teens P/E gives it a clean fundamental profile. The very wide extension above its MA50 (+15.4%) is the standout feature and tempers conviction slightly, as it implies the trend is the most stretched technically. No substantive news could be sourced to corroborate or challenge this picture.\n\n**3. Incyte (INCY)** — Best-in-group ROA and an essentially debt-free balance sheet are notable strengths, but the RSI (38.7) and minimal MA50 cushion (+0.7%) represent the weakest, least-confirmed momentum profile in the cohort — it barely clears both technical thresholds used in the screen. Unverified snippet references to pipeline/event catalysts add a layer of uncertainty that cannot be confirmed here.\n\n**4. Ulta Beauty (ULTA)** — Highest headline ROE (46.1%) but this sits on the highest leverage (95.5% D/E, near the screen's ceiling) and the highest P/E (19.64) in the group, leaving the least valuation and balance-sheet cushion. Search snippets pointing to negative guidance/comp-sales reactions (unverified, but directionally consistent with consumer-cyclical sensitivity) add qualitative caution despite currently strong technical readings (RSI 57.1, +5.4% above MA50).\n\n---\n\n**Disclaimer:** This document is a research/analytical summary based on a quantitative screen and limited, largely unverified web search snippets. It is provided for informational and discussion purposes only, does not constitute investment advice, and includes no recommendation to buy, sell, hold, or size any position in the securities discussed.",
+  "valuation_method": {
+    "model": "Two-stage DCF on levered free cash flow (FCF discounted at cost of equity, compared with market cap — no net-debt bridge)",
+    "horizon_years": 10,
+    "terminal_growth_pct": 2.5,
+    "discount_rate": "CAPM: 10y Treasury + beta x 5% ERP, beta clamped to [0.5, 2.0], rate clamped to [7%, 15%]",
+    "implied_growth": "Reverse DCF — the FCF growth rate that sets the model's equity value equal to today's market cap. What the price assumes, not a forecast.",
+    "projected_growth_band_pct": [
+      -15.0,
+      25.0
+    ],
+    "probability": "P(growth >= implied growth) under a Student-t fitted to the company's own year-on-year FCF growth. Small-sample base rate from its own history, not a market-implied probability."
+  },
+  "valuations": [
+    {
+      "ticker": "CF",
+      "market_cap": 20208179200,
+      "currency": "USD",
+      "price": 133.42,
+      "fcf_latest": 1801000000.0,
+      "fcf_source": "Free Cash Flow (reported)",
+      "fcf_years": 4,
+      "fcf_series": [
+        3393000000.0,
+        1033000000.0,
+        1750000000.0,
+        1801000000.0
+      ],
+      "cost_of_equity_pct": 7.45,
+      "beta_used": 0.5,
+      "risk_free_rate_pct": 4.95,
+      "implied_growth_pct": -5.26,
+      "implied_growth_status": "ok",
+      "historical_growth_pct": -19.03,
+      "modelled_growth_pct": -15.0,
+      "historical_growth_capped": true,
+      "gap_pp": 13.8,
+      "dcf_value_per_share": 64.38,
+      "dcf_upside_pct": -51.7,
+      "probability": {
+        "observations": 3,
+        "historical_mean_growth_pct": -19.03,
+        "basis": "log growth",
+        "historical_log_stdev": 0.883,
+        "t_statistic": 0.178,
+        "degrees_of_freedom": 2,
+        "probability_pct": 43.8
+      },
+      "nombre": "CF Industries Holdings, Inc.",
+      "sector": "Basic Materials"
+    },
+    {
+      "ticker": "INCY",
+      "market_cap": 24822366208,
+      "currency": "USD",
+      "price": 122.47,
+      "fcf_latest": 1329631000.0,
+      "fcf_source": "Free Cash Flow (reported)",
+      "fcf_years": 4,
+      "fcf_series": [
+        892108000.0,
+        449001000.0,
+        235174000.0,
+        1329631000.0
+      ],
+      "cost_of_equity_pct": 8.8,
+      "beta_used": 0.77,
+      "risk_free_rate_pct": 4.95,
+      "implied_growth_pct": 4.31,
+      "implied_growth_status": "ok",
+      "historical_growth_pct": 14.23,
+      "modelled_growth_pct": 14.23,
+      "historical_growth_capped": false,
+      "gap_pp": -9.9,
+      "dcf_value_per_share": 260.23,
+      "dcf_upside_pct": 112.5,
+      "probability": {
+        "observations": 3,
+        "historical_mean_growth_pct": 14.23,
+        "basis": "log growth",
+        "historical_log_stdev": 1.385,
+        "t_statistic": -0.066,
+        "degrees_of_freedom": 2,
+        "probability_pct": 52.3
+      },
+      "nombre": "Incyte Corporation",
+      "sector": "Healthcare"
+    },
+    {
+      "ticker": "NEM",
+      "market_cap": 133292072960,
+      "currency": "USD",
+      "price": 126.41,
+      "fcf_latest": 7299000000.0,
+      "fcf_source": "Free Cash Flow (reported)",
+      "fcf_years": 4,
+      "fcf_series": [
+        1089000000.0,
+        97000000.0,
+        2961000000.0,
+        7299000000.0
+      ],
+      "cost_of_equity_pct": 7.66,
+      "beta_used": 0.54,
+      "risk_free_rate_pct": 4.95,
+      "implied_growth_pct": 1.45,
+      "implied_growth_status": "ok",
+      "historical_growth_pct": 88.54,
+      "modelled_growth_pct": 25.0,
+      "historical_growth_capped": true,
+      "gap_pp": -87.1,
+      "dcf_value_per_share": 784.05,
+      "dcf_upside_pct": 520.2,
+      "probability": {
+        "observations": 3,
+        "historical_mean_growth_pct": 88.54,
+        "basis": "log growth",
+        "historical_log_stdev": 2.928,
+        "t_statistic": -0.212,
+        "degrees_of_freedom": 2,
+        "probability_pct": 57.4
+      },
+      "nombre": "Newmont Corporation",
+      "sector": "Basic Materials"
+    },
+    {
+      "ticker": "ULTA",
+      "market_cap": 23079948288,
+      "currency": "USD",
+      "price": 539.78,
+      "fcf_latest": 1067951000.0,
+      "fcf_source": "Free Cash Flow (reported)",
+      "fcf_years": 4,
+      "fcf_series": [
+        1169789000.0,
+        1040999000.0,
+        964147000.0,
+        1067951000.0
+      ],
+      "cost_of_equity_pct": 9.22,
+      "beta_used": 0.85,
+      "risk_free_rate_pct": 4.95,
+      "implied_growth_pct": 7.15,
+      "implied_growth_status": "ok",
+      "historical_growth_pct": -2.99,
+      "modelled_growth_pct": -2.99,
+      "historical_growth_capped": false,
+      "gap_pp": 10.1,
+      "dcf_value_per_share": 254.22,
+      "dcf_upside_pct": -52.9,
+      "probability": {
+        "observations": 3,
+        "historical_mean_growth_pct": -2.99,
+        "basis": "log growth",
+        "historical_log_stdev": 0.117,
+        "t_statistic": 0.853,
+        "degrees_of_freedom": 2,
+        "probability_pct": 24.2
+      },
+      "nombre": "Ulta Beauty, Inc.",
+      "sector": "Consumer Cyclical"
+    }
+  ],
+  "valuation_failed": [],
+  "valuation_report": "# What Is Priced In vs. What Was Delivered: Four S&P 500 Names\n\n*A reverse-DCF read, in the spirit of asking \"what does this price need to be true?\" rather than \"is this a good business?\"*\n\n---\n\n## 1. Company-by-Company Read\n\n### CF Industries (CF) — Basic Materials\nAt $133.42, the market is pricing in FCF **shrinking at -5.26% a year**, in perpetuity terms. That is a decline assumption, not a growth story — the price already concedes the business gets smaller. The catch is that CF's actual trailing FCF CAGR was **-19.03%**, a far steeper contraction than what's priced in.\n\n**Flag — historical growth capped:** the raw -19.03% CAGR was not used to project the DCF. It was clamped to -15% because the underlying series (from \\$3.39B down to \\$1.03B and partially back up to \\$1.80B) is a commodity-price-driven cycle, not a trend; extrapolating it straight would produce a valuation that assumes indefinite near-total collapse — a modeling artifact, not a forecast. Even with that cap, the forward DCF lands at \\$64.38/share, 51.7% below the current price.\n\nThe gap between implied (-5.26%) and historical (-19.03%) is +13.8pp — the market is asking CF to decline *less* than its recent trend, which is a moderately demanding ask given how cyclical the recent history has been.\n\n**Probability check:** the model puts a 43.8% chance that CF clears the -5.26% bar, but this rests on **only 3 observations** and a log-growth standard deviation of 0.883 — close to the threshold where \"the number means something\" breaks down. Treat 43.8% as a loose, noisy base rate, not a real forecast.\n\n### Incyte (INCY) — Healthcare\nThe price assumes FCF growing at **4.31% a year**. Incyte's actual trailing CAGR was 14.23% — well above what's being asked. This is not a capped figure; the historical trend was used directly in the forward model, producing a DCF value of \\$260.23, more than double the current \\$122.47 price.\n\nThe gap is -9.9pp: the market is pricing in materially less growth than the company has recently delivered — an undemanding embedded expectation, at face value.\n\n**Probability check:** 52.3% probability of clearing that bar sounds like a coin flip, and given only **3 observations** and a log-stdev of 1.385 — well above the 1.0 threshold where volatility swamps the signal — it effectively is one. Incyte's FCF history (892M → 449M → 235M → 1,330M) swings hard enough that neither the \"14.23%\" historical trend nor the \"52.3%\" probability should be read as precise.\n\n### Newmont (NEM) — Basic Materials\nThe price implies almost no growth at all: **1.45% a year**. That is an extremely undemanding bar on its face, because Newmont's FCF actually grew at a reported 88.54% CAGR over the period shown.\n\n**Flag — historical growth capped:** that 88.54% figure is not usable as a projection. It is mechanically inflated by a near-zero trough year (\\$97M), against which any recovery reads as an explosive percentage. The model correctly refused to extrapolate it and instead clamped modelled growth to the +25% ceiling — itself an aggressive assumption. Even so, that clamped 25% produces a DCF value of \\$784.05, +520.2% above the current price — a number so large it says more about the fragility of the clamp than about intrinsic value. This is the clearest case here where the DCF output should be treated as diagnostic, not as a price target.\n\nThe implied-vs-historical gap is -87.1pp, the widest in this set — but it is a gap built substantially on an unrepresentative base year, so \"undemanding\" needs an asterisk.\n\n**Probability check:** 57.4%, from **3 observations** and a log-stdev of 2.928 — an extreme reading that puts this probability barely above noise. The honest statement is: Newmont's FCF history over this window is too erratic (cyclical gold prices, lumpy capex) to support any confident probability statement.\n\n### Ulta Beauty (ULTA) — Consumer Cyclical\nThe price assumes FCF growing at **7.15% a year** — a real re-acceleration. Ulta's actual trailing FCF CAGR was -2.99%, i.e., the business has recently been shrinking, not growing. This figure was not capped (it sits well inside the [-15%, +25%] band) and was used directly in the model, producing a DCF value of \\$254.22 versus a current price of \\$539.78 — 52.9% downside on the modelled trajectory.\n\nThe gap is +10.1pp: the market is asking Ulta to swing from mild decline to mid-single-digit growth — a real, demanding turnaround relative to the recent trend, not a continuation of anything already observed.\n\n**Probability check:** at 24.2%, this is the lowest probability in the set, but it is also the one probability worth taking more seriously — the log-stdev of 0.117 is well inside the \"compounds steadily\" zone (<0.2), meaning Ulta's FCF history is comparatively stable and the Student-t fit is on firmer ground than the other three names. Still, **only 3 observations** — a small sample regardless of how tidy the trend looks.\n\n---\n\n## 2. Ranking: Most Undemanding to Most Demanding Embedded Expectations\n\nRanked by the favorable gap between what's priced in and what the business actually did (implied growth minus historical growth; more negative = lower bar):\n\n| Rank | Ticker | Implied Growth | Historical Growth | Gap (pp) | Read |\n|---|---|---|---|---|---|\n| 1 | NEM | +1.45% | +88.54% (capped) | -87.1 | Extremely low bar on paper, but historical figure is a base-effect artifact — treat the size of this gap with real skepticism |\n| 2 | INCY | +4.31% | +14.23% | -9.9 | Genuinely undemanding — price asks for materially less than the recent trend delivered |\n| 3 | ULTA | +7.15% | -2.99% | +10.1 | Demanding — price requires a reversal from recent decline to growth |\n| 4 | CF | -5.26% | -19.03% (capped) | +13.8 | Most demanding of the four — price requires the decline to moderate versus a still-steep recent trend |\n\nRead this ranking with care: it measures the *direction and size* of the gap, not its reliability. NEM tops the list only because its historical denominator is distorted by a near-zero base year; INCY's #2 ranking rests on just three data points with very high volatility. None of these gaps should be treated as a scored probability of outperformance.\n\n---\n\n## 3. Where This Model Is Most Likely to Be Wrong\n\n- **Sample size.** Every company here has only 3 year-on-year growth observations feeding the Student-t probability. A base rate built on 3 data points is a coin toss with commentary, not a statistically grounded estimate — this applies uniformly across CF, INCY, NEM, and ULTA.\n- **Clamping hides the real disagreement.** For CF and NEM, the historical growth rate was capped before it ever reached the DCF, meaning the \"modelled\" value and its resulting upside/downside are functions of an arbitrary boundary (-15%/+25%), not of the company's actual trajectory. NEM's +520% modelled upside in particular should be read as \"the model hit its ceiling,\" not as a valuation signal.\n- **A 4-year FCF window is short and cycle-sensitive.** All four series look at most 4 data points; commodity names (CF, NEM) and a specialty biotech (INCY) are exactly the kinds of businesses where a 4-year window can catch a trough, a spike, or both, and mistake it for a trend.\n- **High log-volatility undermines the probability column specifically.** For INCY (1.385) and NEM (2.928), the historical log-stdev is far above the ~1.0 threshold where the model says the probability is barely better than a coin flip — meaning the 52.3% and 57.4% figures should not be quoted as if they were precise estimates, even though they are the outputs shown.\n- **Static discount-rate mechanics.** The CAPM cost of equity here is clamped to a narrow beta band [0.5, 2.0] and a rate band [7%, 15%]; for genuinely low-beta or high-beta names this can understate or overstate the true required return, shifting every downstream DCF value and implied growth number.\n- **Terminal growth is a single fixed assumption (2.5%)** applied uniformly across a fertilizer producer, a gold miner, a biotech, and a beauty retailer — businesses with structurally different long-run growth ceilings.\n- **The model only sees FCF, not the reasons behind it.** No revenue, margin, guidance, or segment data feeds this analysis, so a swing in FCF caused by a one-off (a legal settlement, a licensing deal, a capex pause) is indistinguishable from a genuine trend change in the historical series that anchors both the historical CAGR and the probability calculation.\n\nThis is descriptive commentary on model outputs, not a recommendation to buy, sell, or hold any security."
 }
