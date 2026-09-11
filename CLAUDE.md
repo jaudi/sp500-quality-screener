@@ -97,17 +97,46 @@ Things that will bite you:
   and any probability built on that is noise wearing a lab coat. In logs the
   round trip cancels and the geometric mean comes back equal to the CAGR — which
   is the invariant to test against if you touch this.
-- **The projected growth is clamped to [-15%, +25%] and the reverse-DCF search
-  is not.** They are different things: one is a forecast that has to be
-  defensible, the other is an unknown being solved for. Unclamped, Newmont's 88%
-  CAGR projected out to a fair value of $8,335 against a $128 price. The clamp
-  sets `historical_growth_capped`, and the agent is instructed to flag it.
-- **`probability.historical_log_stdev` is what makes the probability readable.**
-  Below ~0.2 the company compounds steadily and the number means something;
-  above ~1.0 it is barely better than a coin flip.
-- **n is 3, sometimes 4.** yfinance gives 4–5 annual statements, so the Student-t
-  is doing real work here — a normal would understate the tails badly. `scipy`
-  is deliberately not a dependency; the t CDF is a ~40-line incomplete beta.
+- **The R² test is what stops the model inventing trends.** A projection is only
+  made when a least-squares line through log FCF clears
+  `R2_MINIMO_PARA_PROYECTAR`. On a typical week that is one company out of five.
+  That is the correct outcome, not a bug to tune away: with four annual points, a
+  poor fit means the "growth rate" describes the path the series took rather than
+  where the business is going. CAGR alone cannot see this, because it only looks
+  at the endpoints — which is exactly how Newmont produced an 88% CAGR out of a
+  trough year.
+- **Anything downstream of a failed trend must be withheld, not softened.** The
+  earlier version clamped the growth to a band and published the result with a
+  footnote; that produced a $8,335 fair value against a $128 price, a number
+  driven by the boundary rather than the company. `dcf_value_per_share`,
+  `dcf_upside_pct` and `gap_pp` are all null when the trend fails, with
+  `dcf_skipped_reason` carrying the explanation. Subtracting from a discarded
+  trend gives arithmetic, not evidence.
+- **The probability is withheld above `LOG_STDEV_MAX_PUBLICABLE`.** A figure of
+  52.3% next to a "treat with caution" label still reads as 52.3% — in a table
+  the number always beats the caveat. Below the threshold it is published as a
+  range, never a point, because n is 3.
+- **n is 3, sometimes 4, and quarterly data does not rescue it.** yfinance
+  exposes about five quarters of cash flow, heavily seasonal, and none at all for
+  several IBEX tickers. This was checked; do not re-litigate it by reaching for
+  `quarterly_cashflow`. The Student-t is doing real work at this sample size — a
+  normal would understate the tails badly. `scipy` is deliberately not a
+  dependency; the t CDF is a ~40-line incomplete beta.
+- **The risk-free rate must match the currency of the cash flows.** Yahoo only
+  quotes US Treasuries — there is no Bund and no euro curve — so only USD is
+  live and every other currency falls back to a documented constant in
+  `TASA_LIBRE_RIESGO_FALLBACK`, surfaced per company in `risk_free_source`.
+  Discounting a euro reporter at the US 10-year, which the first version did, is
+  not an approximation; it mixes two inflation regimes.
+- **Revenue is carried as corroboration, not decoration.** Where FCF growth and
+  revenue growth agree the trend is probably real; where they split, the cash
+  flow move likely came from working capital, a capex pause or something
+  non-recurring. The model cannot tell which — it never sees margins, segments or
+  guidance — so the divergence is reported and left uninterpreted.
+- **`dcf_terminal_value_share_pct` exists because 2.5% is applied to everything.**
+  A miner, a biotech and a beauty retailer do not share a long-run growth
+  ceiling. When the terminal share is high, that single assumption is most of the
+  answer.
 - Negative latest FCF, a currency mismatch between quote and filings, or fewer
   than two years of history all raise and land in `valuation_failed` rather than
   producing a number built on gaps.

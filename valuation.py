@@ -37,14 +37,42 @@ CRECIMIENTO_TERMINAL = 0.025
 
 # CAPM: ke = tasa libre de riesgo + beta × prima de riesgo.
 PRIMA_RIESGO_MERCADO = 0.05
-TASA_LIBRE_RIESGO_FALLBACK = 0.04
+
+# La tasa libre de riesgo tiene que ir en la misma divisa que los flujos. Yahoo
+# solo publica deuda del Tesoro de EE.UU. (^TNX/^IRX/^TYX): no hay Bund ni curva
+# euro, así que para el resto de divisas se usa una constante documentada y el
+# JSON dice cuál se aplicó y si vino en vivo o de aquí. Descontar una empresa que
+# reporta en euros con el 10 años americano — lo que hacía la versión anterior —
+# no era una aproximación, era mezclar dos economías con inflaciones distintas.
+TASA_LIBRE_RIESGO_FALLBACK = {
+    "USD": 0.040,
+    "EUR": 0.027,   # Bund 10a aprox., revisar si se desvía mucho
+    "GBP": 0.043,
+    "CHF": 0.005,
+}
+TASA_LIBRE_RIESGO_POR_DEFECTO = 0.040
 
 # La beta de Yahoo es ruidosa (ventanas cortas, tickers ilíquidos) y una beta de
-# 0.1 o de 3.5 rompe el descuento. Se acota a un rango defendible, igual que ke:
-# el objetivo es que ninguna empresa salga del cribado con un coste de capital
-# absurdo por un único dato malo de la API.
-BETA_MIN, BETA_MAX = 0.5, 2.0
-KE_MIN, KE_MAX = 0.07, 0.15
+# 0.1 o de 3.5 rompe el descuento. Se sigue acotando, pero la banda anterior
+# ([0.5, 2.0] y ke en [7%, 15%]) era tan estrecha que recortaba betas legítimas:
+# LOG.MC cotiza con 0.437 y NEM con 0.543, defensivas de verdad a las que se les
+# estaba imponiendo un coste de capital superior al suyo. Ahora la banda solo
+# atrapa valores imposibles, y cuando muerde se marca en beta_clamped/ke_clamped
+# en lugar de desaparecer dentro del número.
+BETA_MIN, BETA_MAX = 0.3, 2.5
+KE_MIN, KE_MAX = 0.05, 0.18
+
+# Por debajo de este R² la serie de FCF no se considera una tendencia y no se
+# proyecta. Es el filtro que separa a un compounder de una cíclica que ha pasado
+# por un suelo: con 4 puntos, un ajuste malo significa que el "crecimiento
+# histórico" describe el recorrido de la serie, no el rumbo del negocio.
+R2_MINIMO_PARA_PROYECTAR = 0.50
+
+# Por encima de esta volatilidad logarítmica la probabilidad no se publica. El
+# modelo ya sabía que por encima de ~1.0 no distingue nada; seguir enseñando un
+# 52.3% con una etiqueta de "poco fiable" al lado es pedirle al lector que
+# ignore la cifra más concreta de la fila, que no es como se leen las tablas.
+LOG_STDEV_MAX_PUBLICABLE = 1.0
 
 # Rango de búsqueda del crecimiento implícito. Fuera de aquí no se inventa un
 # número: se reporta que el precio está fuera del rango que el modelo cubre.
@@ -204,6 +232,38 @@ def cagr(serie: list[float]) -> float | None:
     return (fin / inicio) ** (1.0 / anios) - 1.0
 
 
+def tendencia_log_lineal(serie: list[float]) -> tuple[float | None, float | None]:
+    """Ajusta una recta por mínimos cuadrados sobre log(FCF). Devuelve (crecimiento, R²).
+
+    El CAGR solo mira los dos extremos, así que hereda todo lo que tengan de
+    raro: el 88,54% de Newmont sale de comparar 1.089 con 7.299 e ignora por
+    completo que por el medio hubo un suelo de 97. La recta usa todos los puntos,
+    y sobre todo el R² dice si la serie se parece a una tendencia o es un
+    recorrido accidentado — que con cuatro observaciones es la pregunta que de
+    verdad importa antes de proyectar nada.
+    """
+    puntos = [(i, math.log(v)) for i, v in enumerate(serie) if v > 0]
+    if len(puntos) < 3:
+        # Con dos puntos la recta pasa exacta por ambos y el R² es 1 por
+        # construcción, que sería un aprobado automático sin información.
+        return None, None
+
+    n = len(puntos)
+    media_x = sum(x for x, _ in puntos) / n
+    media_y = sum(y for _, y in puntos) / n
+
+    sxy = sum((x - media_x) * (y - media_y) for x, y in puntos)
+    sxx = sum((x - media_x) ** 2 for x, _ in puntos)
+    if sxx == 0:
+        return None, None
+
+    pendiente = sxy / sxx
+    syy = sum((y - media_y) ** 2 for _, y in puntos)
+    r2 = 1.0 if syy == 0 else max(0.0, min(1.0, (sxy * sxy) / (sxx * syy)))
+
+    return math.exp(pendiente) - 1.0, r2
+
+
 def log_crecimientos_interanuales(serie: list[float]) -> list[float]:
     """Crecimientos año contra año en logaritmos, saltando tramos no positivos.
 
@@ -229,31 +289,75 @@ def log_crecimientos_interanuales(serie: list[float]) -> list[float]:
 # ==============================================================================
 # COSTE DE CAPITAL Y DCF
 # ==============================================================================
-def obtener_tasa_libre_riesgo() -> float:
-    """Rendimiento del bono USA a 10 años (^TNX), con fallback si Yahoo falla."""
-    try:
-        hist = yf.Ticker("^TNX").history(period="5d")
-        if not hist.empty:
-            tasa = float(hist["Close"].iloc[-1]) / 100.0
-            if 0.0 < tasa < 0.15:
-                return tasa
-    except Exception:
-        pass
-    return TASA_LIBRE_RIESGO_FALLBACK
+def obtener_tasa_libre_riesgo(divisa: str | None = "USD") -> tuple[float, str]:
+    """Tasa libre de riesgo en la divisa de los flujos. Devuelve (tasa, fuente).
+
+    Solo el dólar tiene cotización en vivo — Yahoo publica ^TNX pero ningún
+    equivalente europeo. Para el resto se devuelve la constante documentada y se
+    dice que lo es, para que quede claro en el JSON qué número es de mercado y
+    cuál es una hipótesis que hay que revisar de vez en cuando.
+    """
+    divisa = (divisa or "USD").upper()
+
+    if divisa == "USD":
+        try:
+            hist = yf.Ticker("^TNX").history(period="5d")
+            if not hist.empty:
+                tasa = float(hist["Close"].iloc[-1]) / 100.0
+                if 0.0 < tasa < 0.15:
+                    return tasa, "live (^TNX 10y Treasury)"
+        except Exception:
+            pass
+
+    tasa = TASA_LIBRE_RIESGO_FALLBACK.get(divisa, TASA_LIBRE_RIESGO_POR_DEFECTO)
+    return tasa, f"static default for {divisa}"
 
 
-def coste_capital_propio(beta, tasa_libre_riesgo: float) -> tuple[float, float]:
-    """CAPM acotado. Devuelve (ke, beta efectivamente usada)."""
+def coste_capital_propio(beta, tasa_libre_riesgo: float) -> dict:
+    """CAPM acotado, informando de si el recorte llegó a morder."""
     try:
         beta_valor = float(beta)
     except (TypeError, ValueError):
+        beta_valor = None
+    if beta_valor is None or math.isnan(beta_valor):
         beta_valor = 1.0
-    if math.isnan(beta_valor):
-        beta_valor = 1.0
+        beta_ausente = True
+    else:
+        beta_ausente = False
 
     beta_acotada = min(max(beta_valor, BETA_MIN), BETA_MAX)
-    ke = tasa_libre_riesgo + beta_acotada * PRIMA_RIESGO_MERCADO
-    return min(max(ke, KE_MIN), KE_MAX), beta_acotada
+    ke_bruto = tasa_libre_riesgo + beta_acotada * PRIMA_RIESGO_MERCADO
+    ke = min(max(ke_bruto, KE_MIN), KE_MAX)
+
+    return {
+        "ke": ke,
+        "beta_used": round(beta_acotada, 3),
+        "beta_reported": None if beta_ausente else round(beta_valor, 3),
+        "beta_clamped": beta_acotada != beta_valor,
+        "ke_clamped": ke != ke_bruto,
+        "beta_missing": beta_ausente,
+    }
+
+
+def peso_valor_terminal(fcf_base: float, crecimiento: float, ke: float) -> float:
+    """Fracción del DCF que sale de la perpetuidad, no de los 10 años explícitos.
+
+    Es la cifra que dice cuánto pesa de verdad la hipótesis de crecimiento
+    terminal. Si el 85% del valor está en el terminal, discutir el crecimiento
+    de los años 1 a 10 es discutir el 15% del resultado, y el 2,5% fijo — igual
+    para una minera de oro que para una retailer — es quien manda.
+    """
+    explicito = sum(
+        fcf_base * (1.0 + crecimiento) ** anio / (1.0 + ke) ** anio
+        for anio in range(1, HORIZONTE_ANIOS + 1)
+    )
+    fcf_final = fcf_base * (1.0 + crecimiento) ** HORIZONTE_ANIOS
+    terminal = (
+        fcf_final * (1.0 + CRECIMIENTO_TERMINAL) / (ke - CRECIMIENTO_TERMINAL)
+    ) / (1.0 + ke) ** HORIZONTE_ANIOS
+
+    total = explicito + terminal
+    return terminal / total if total else 0.0
 
 
 def valor_equity(fcf_base: float, crecimiento: float, ke: float) -> float:
@@ -369,6 +473,19 @@ def probabilidad_de_alcanzar(objetivo: float, log_historicos: list[float]) -> di
             "reason": "historical growth has zero variance",
         }
 
+    # Por encima del umbral la t está tan aplanada que la probabilidad no
+    # distingue un 30% de un 70%. Se retiene en lugar de publicarla con una
+    # advertencia al lado: en una tabla, el número gana siempre a la nota.
+    if desviacion > LOG_STDEV_MAX_PUBLICABLE:
+        return {
+            **base,
+            "probability_pct": None,
+            "reason": (
+                f"cash flow too volatile to estimate (log stdev {desviacion:.2f} "
+                f"> {LOG_STDEV_MAX_PUBLICABLE}); any probability here would be noise"
+            ),
+        }
+
     t_stat = (objetivo_log - media) / desviacion
     probabilidad = 1.0 - cdf_t_student(t_stat, n - 1)
 
@@ -377,13 +494,34 @@ def probabilidad_de_alcanzar(objetivo: float, log_historicos: list[float]) -> di
         "t_statistic": round(t_stat, 3),
         "degrees_of_freedom": n - 1,
         "probability_pct": round(probabilidad * 100, 1),
+        # Con n=3 el intervalo es enorme y esconderlo daba una falsa precisión.
+        # Se acota reajustando la desviación por su propia incertidumbre (chi2
+        # aproximada vía el factor 1 ± 1/sqrt(2(n-1))), que basta para enseñar
+        # el orden de magnitud del error sin fingir un método exacto.
+        "probability_range_pct": _rango_probabilidad(objetivo_log, media, desviacion, n),
     }
+
+
+def _rango_probabilidad(objetivo_log: float, media: float, desviacion: float, n: int) -> list:
+    """Banda aproximada de la probabilidad, dada la incertidumbre de la propia sigma."""
+    factor = 1.0 / math.sqrt(2.0 * (n - 1))
+    extremos = []
+    for ajuste in (1.0 - factor, 1.0 + factor):
+        sigma = desviacion * ajuste
+        if sigma <= 0:
+            continue
+        p = 1.0 - cdf_t_student((objetivo_log - media) / sigma, n - 1)
+        extremos.append(round(p * 100, 1))
+
+    if not extremos:
+        return None
+    return [min(extremos), max(extremos)]
 
 
 # ==============================================================================
 # ORQUESTACIÓN POR EMPRESA
 # ==============================================================================
-def analizar_valoracion(ticker: str, tasa_libre_riesgo: float, precio_cribado: float | None = None) -> dict:
+def analizar_valoracion(ticker: str, precio_cribado: float | None = None) -> dict:
     """Calcula DCF inverso + DCF histórico + probabilidad implícita para un ticker.
 
     Lanza ValueError con un motivo legible cuando faltan los datos mínimos, para
@@ -413,14 +551,30 @@ def analizar_valoracion(ticker: str, tasa_libre_riesgo: float, precio_cribado: f
     if fcf_base <= 0:
         raise ValueError("latest free cash flow is negative — reverse DCF is not meaningful")
 
-    ke, beta_usada = coste_capital_propio(info.get("beta"), tasa_libre_riesgo)
+    # La tasa se resuelve por empresa, no una vez para toda la tanda: el IBEX
+    # reporta en euros y el S&P en dólares, y son curvas distintas.
+    tasa_libre_riesgo, fuente_tasa = obtener_tasa_libre_riesgo(divisa_estados or divisa_precio)
+
+    capm = coste_capital_propio(info.get("beta"), tasa_libre_riesgo)
+    ke = capm["ke"]
 
     # 1. Lo que el precio está asumiendo.
     g_implicito, estado_implicito = crecimiento_implicito(capitalizacion, fcf_base, ke)
 
-    # 2. Lo que la empresa ha hecho de verdad.
+    # 2. Lo que la empresa ha hecho de verdad. Se calculan las dos lecturas: el
+    #    CAGR punta a punta, que es lo que pediría cualquiera, y la recta sobre
+    #    los logaritmos, que usa todos los puntos y viene con un R² que dice si
+    #    la serie merece llamarse tendencia.
     g_historico = cagr(serie_fcf)
+    g_tendencia, r2 = tendencia_log_lineal(serie_fcf)
     historicos = log_crecimientos_interanuales(serie_fcf)
+
+    # Corroboración con ingresos: si el FCF se dispara pero la facturación no se
+    # mueve, el movimiento viene de circulante, de un capex aplazado o de algo
+    # no recurrente, no de que el negocio esté creciendo. No prueba cuál es,
+    # pero marca la diferencia para que no se lea como tendencia.
+    serie_ingresos = _serie_anual(ticker_obj.financials, "Total Revenue")
+    g_ingresos = cagr(serie_ingresos)
 
     acciones = info.get("sharesOutstanding")
     precio = precio_cribado or info.get("currentPrice")
@@ -429,15 +583,33 @@ def analizar_valoracion(ticker: str, tasa_libre_riesgo: float, precio_cribado: f
     potencial_pct = None
     g_modelado = None
     crecimiento_acotado = False
-    if g_historico is not None:
-        # El crecimiento de la etapa explícita puede superar a ke sin problema;
-        # el único que no puede es el terminal, que es constante y ya está por
-        # debajo del suelo de ke. El acotado de aquí no es por matemáticas sino
-        # por credibilidad de la previsión (ver G_MODELADO_MIN/MAX).
-        g_modelado = min(max(g_historico, G_MODELADO_MIN), G_MODELADO_MAX)
-        crecimiento_acotado = g_modelado != g_historico
-        valor_historico = valor_equity(fcf_base, g_modelado, ke)
-        if acciones:
+    peso_terminal = None
+    motivo_sin_dcf = None
+
+    # La proyección solo sale si la serie se comporta como una tendencia. Antes
+    # se proyectaba siempre y el recorte a la banda se anunciaba en una nota,
+    # pero eso publicaba un valor por acción que era función del límite elegido
+    # y no de la empresa: Newmont daba +520% porque el modelo había chocado con
+    # su propio techo del 25%, no porque valiera eso.
+    if g_tendencia is None or r2 is None:
+        motivo_sin_dcf = "not enough usable free cash flow points to fit a trend"
+    elif r2 < R2_MINIMO_PARA_PROYECTAR:
+        motivo_sin_dcf = (
+            f"free cash flow does not follow a trend (R2 {r2:.2f} < {R2_MINIMO_PARA_PROYECTAR}); "
+            "projecting it would describe the path of the series, not the business"
+        )
+    else:
+        g_modelado = min(max(g_tendencia, G_MODELADO_MIN), G_MODELADO_MAX)
+        crecimiento_acotado = g_modelado != g_tendencia
+        if crecimiento_acotado:
+            motivo_sin_dcf = (
+                f"trend growth {g_tendencia * 100:.1f}% sits outside the projectable band "
+                f"[{G_MODELADO_MIN * 100:.0f}%, {G_MODELADO_MAX * 100:.0f}%]; any value would be "
+                "a function of that boundary rather than of the company"
+            )
+        elif acciones:
+            valor_historico = valor_equity(fcf_base, g_modelado, ke)
+            peso_terminal = round(peso_valor_terminal(fcf_base, g_modelado, ke) * 100, 1)
             valor_por_accion = valor_historico / acciones
             if precio:
                 potencial_pct = round((valor_por_accion / precio - 1.0) * 100, 1)
@@ -450,9 +622,23 @@ def analizar_valoracion(ticker: str, tasa_libre_riesgo: float, precio_cribado: f
               "reason": f"implied growth {estado_implicito}"}
     )
 
+    # La brecha se mide contra la tendencia, no contra el CAGR: comparar lo que
+    # el precio exige con un número anclado en dos extremos daba lecturas como
+    # los -87pp de Newmont, que medían el suelo de 2022 más que al negocio.
+    #
+    # Y solo se publica si esa tendencia ha pasado el test de R². Restar de un
+    # ajuste que el propio modelo ha descartado devuelve aritmética, no una
+    # señal: Newmont daba -147,6pp contra una "tendencia" del 149% que ya se
+    # había declarado no proyectable dos líneas más arriba.
     brecha_pp = None
-    if g_implicito is not None and g_historico is not None:
-        brecha_pp = round((g_implicito - g_historico) * 100, 1)
+    tendencia_fiable = r2 is not None and r2 >= R2_MINIMO_PARA_PROYECTAR
+    if g_implicito is not None and tendencia_fiable and g_tendencia is not None:
+        brecha_pp = round((g_implicito - g_tendencia) * 100, 1)
+
+    # Divergencia FCF vs ingresos, en puntos porcentuales.
+    divergencia_pp = None
+    if g_tendencia is not None and g_ingresos is not None:
+        divergencia_pp = round((g_tendencia - g_ingresos) * 100, 1)
 
     return {
         "ticker": ticker,
@@ -464,16 +650,27 @@ def analizar_valoracion(ticker: str, tasa_libre_riesgo: float, precio_cribado: f
         "fcf_years": len(serie_fcf),
         "fcf_series": [round(v, 0) for v in serie_fcf],
         "cost_of_equity_pct": round(ke * 100, 2),
-        "beta_used": round(beta_usada, 2),
+        "beta_used": capm["beta_used"],
+        "beta_reported": capm["beta_reported"],
+        "beta_clamped": capm["beta_clamped"],
+        "ke_clamped": capm["ke_clamped"],
+        "beta_missing": capm["beta_missing"],
         "risk_free_rate_pct": round(tasa_libre_riesgo * 100, 2),
+        "risk_free_source": fuente_tasa,
         "implied_growth_pct": round(g_implicito * 100, 2) if g_implicito is not None else None,
         "implied_growth_status": estado_implicito,
         "historical_growth_pct": round(g_historico * 100, 2) if g_historico is not None else None,
+        "trend_growth_pct": round(g_tendencia * 100, 2) if g_tendencia is not None else None,
+        "trend_r2": round(r2, 3) if r2 is not None else None,
+        "revenue_growth_pct": round(g_ingresos * 100, 2) if g_ingresos is not None else None,
+        "fcf_vs_revenue_divergence_pp": divergencia_pp,
         "modelled_growth_pct": round(g_modelado * 100, 2) if g_modelado is not None else None,
         "historical_growth_capped": crecimiento_acotado,
         "gap_pp": brecha_pp,
         "dcf_value_per_share": round(valor_por_accion, 2) if valor_por_accion else None,
         "dcf_upside_pct": potencial_pct,
+        "dcf_terminal_value_share_pct": peso_terminal,
+        "dcf_skipped_reason": motivo_sin_dcf,
         "probability": probabilidad,
     }
 
@@ -489,9 +686,8 @@ def analizar_valoraciones(
     """
     import time
 
-    tasa_libre_riesgo = obtener_tasa_libre_riesgo()
     print("\n" + "=" * 70)
-    print(f"🧮 Etapa de valoración (DCF inverso) — rf = {tasa_libre_riesgo * 100:.2f}%")
+    print("🧮 Etapa de valoración (DCF inverso)")
     print("=" * 70)
 
     valoraciones, fallidos = [], []
@@ -500,7 +696,6 @@ def analizar_valoraciones(
         try:
             valoracion = analizar_valoracion(
                 ticker,
-                tasa_libre_riesgo,
                 precio_cribado=empresa.get("precio_actual"),
             )
             valoracion["nombre"] = empresa.get("nombre")
@@ -508,11 +703,18 @@ def analizar_valoraciones(
             valoraciones.append(valoracion)
 
             implicito = valoracion["implied_growth_pct"]
-            historico = valoracion["historical_growth_pct"]
+            tendencia = valoracion["trend_growth_pct"]
+            r2 = valoracion["trend_r2"]
             prob = valoracion["probability"].get("probability_pct")
+            prob_txt = f"{prob}%" if prob is not None else "n/d (demasiado volátil)"
+            dcf_txt = (
+                f"DCF {valoracion['dcf_value_per_share']}"
+                if valoracion["dcf_value_per_share"] is not None
+                else "sin DCF"
+            )
             print(
-                f"   {ticker}: implícito {implicito}% vs histórico {historico}% "
-                f"→ probabilidad {prob}%"
+                f"   {ticker}: implícito {implicito}% vs tendencia {tendencia}% "
+                f"(R2 {r2}) → prob {prob_txt} · {dcf_txt}"
             )
         except Exception as e:
             motivo = str(e) if isinstance(e, ValueError) else f"{type(e).__name__}: {e}"

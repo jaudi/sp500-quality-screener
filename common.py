@@ -419,42 +419,74 @@ DCF has been run on levered free cash flow:
 - `implied_growth_pct` is the REVERSE DCF: the annual FCF growth rate that makes
   the model's equity value equal today's market capitalisation. It is what the
   market is pricing in, not a forecast.
-- `historical_growth_pct` is the company's actual FCF CAGR over the years available.
-- `modelled_growth_pct` is what the forward DCF actually projected. When
-  `historical_growth_capped` is true it was clamped to the [-15%, +25%] band,
-  because an unclamped cyclical CAGR produces a fantasy valuation.
-- `dcf_value_per_share` / `dcf_upside_pct` come from projecting `modelled_growth_pct`.
+  It is also the ONE figure available for every company, because it needs only
+  current cash flow and market cap — no history, no trend, no projection. Lead
+  with it.
+- `historical_growth_pct` is the endpoint-to-endpoint FCF CAGR. Report it, but do
+  not lean on it: it sees only the first and last year.
+- `trend_growth_pct` and `trend_r2` come from a least-squares line through log
+  FCF, using every point. **`trend_r2` is the most important diagnostic here.**
+  It says whether the cash flows behave like a trend at all. Below 0.5 the series
+  is a path, not a direction, and no projection was made.
+- `revenue_growth_pct` and `fcf_vs_revenue_divergence_pp` are the corroboration
+  check. Where FCF growth and revenue growth agree, the trend is probably real.
+  Where they diverge sharply, the FCF move is more likely working capital, a
+  capex pause or something non-recurring — say so, but do NOT claim to know
+  which, because you have no margin, segment or guidance data.
+- `dcf_value_per_share` / `dcf_upside_pct` are often null, and `dcf_skipped_reason`
+  says why. A null is a finding, not a gap to apologise for: the model refused to
+  project rather than publish a number driven by its own boundary. Never supply a
+  value the model declined to produce, and never describe the refusal as missing
+  data.
+- `dcf_terminal_value_share_pct` is how much of the DCF comes from the 2.5%
+  perpetuity rather than the ten explicit years. Where it is high, most of the
+  valuation is that one fixed assumption — applied identically to a miner, a
+  biotech and a retailer, which have nothing like the same long-run ceiling.
 - `probability.probability_pct` is P(growth >= implied growth) under a Student-t
   fitted to that company's own year-on-year FCF growth in LOG space, with
-  `probability.observations` data points. Treat it as a rough base rate from a
-  very small sample, never as a market-implied probability.
-- `probability.historical_log_stdev` is the volatility of that growth. It is the
-  single best guide to how much the probability is worth: below ~0.2 the company
-  compounds steadily and the number means something; above ~1.0 the cash flows
-  swing so violently that the probability is barely better than a coin flip, and
-  you should say so rather than quoting it as though it were precise.
+  `probability.observations` data points — typically 3. Three observations cannot
+  support a precise estimate, so quote `probability.probability_range_pct` (the
+  band implied by that sample size) rather than the point value.
+- `probability.probability_pct` is null when the cash flows are too volatile for
+  any estimate to mean anything; `probability.reason` explains it. Report that as
+  "no usable estimate", never as a high or low probability.
+- `beta_clamped`, `ke_clamped` and `beta_missing` flag where the discount rate
+  rests on a boundary or a default rather than the company's own data.
+- `risk_free_source` says whether the risk-free rate was a live market quote or a
+  documented static assumption for that currency.
 
 Valuation data:
 {json.dumps(valoraciones, indent=2, ensure_ascii=False, default=str)}
 
 Instructions:
-1. For each company, state plainly what the price is assuming, how that compares
-   with what the business has actually delivered, and which way the gap cuts.
-2. Interpret the probability honestly. A high number means this company's own
-   history cleared that bar often; it says nothing about whether the future will.
-3. Rank the companies by how undemanding their embedded expectations are — the
-   widest favourable gap between what is priced in and what history delivered.
-4. Close with a section on where this model is most likely to be wrong.
+1. For each company, state plainly what the price is assuming, whether the cash
+   flows are trend-like enough for that to be compared with anything, and which
+   way the gap cuts if so.
+2. Separate the companies into those whose cash flows support a projection
+   (`trend_r2` at or above 0.5) and those where the model declined. For the
+   second group the honest output is the implied growth plus an explanation of
+   why nothing further could be said — that is a real result, not a shortfall.
+3. Interpret the probability honestly, as a range. A high band means this
+   company's own history cleared that bar often; it says nothing about whether
+   the future will.
+4. Close with a section on where this model is most likely to be wrong. Cover at
+   least: the three-observation sample behind every probability, the four-year
+   FCF window and how badly it can misread a cyclical, the single 2.5% terminal
+   growth applied across very different businesses, and the fact that the model
+   sees only cash flow — never the reason behind it, so a legal settlement, a
+   licensing payment or a deferred capex is indistinguishable from a trend.
 
 Rules:
 - Write the entire report in English.
-- Every company whose `historical_growth_capped` is true must be flagged as such
-  in its own section, with the reason the raw CAGR was not projectable.
 - Only use the numbers above. Do not invent revenue, margins, guidance, segment
   detail or news. You have no search tool here and no other source.
 - A negative `implied_growth_pct` means the price is assuming the business
   shrinks — say so explicitly rather than calling the stock "cheap".
-- Flag small-sample fragility wherever `probability.observations` is under 4.
+- Never present a withheld figure as though it were low, high, or estimable. If
+  `dcf_value_per_share` or `probability.probability_pct` is null, say what the
+  model declined to compute and why.
+- Do not rank on a gap computed against a trend whose `trend_r2` is below 0.5;
+  such a gap is arithmetic, not evidence.
 - This is research commentary, not investment advice. Do not recommend buying,
   selling or holding, and do not suggest position sizes or portfolio weightings.
 """
@@ -823,10 +855,18 @@ def run_pipeline(
             "model": "Two-stage DCF on levered free cash flow (FCF discounted at cost of equity, compared with market cap — no net-debt bridge)",
             "horizon_years": valuation.HORIZONTE_ANIOS,
             "terminal_growth_pct": valuation.CRECIMIENTO_TERMINAL * 100,
-            "discount_rate": f"CAPM: 10y Treasury + beta x {valuation.PRIMA_RIESGO_MERCADO * 100:.0f}% ERP, beta clamped to [{valuation.BETA_MIN}, {valuation.BETA_MAX}], rate clamped to [{valuation.KE_MIN * 100:.0f}%, {valuation.KE_MAX * 100:.0f}%]",
-            "implied_growth": "Reverse DCF — the FCF growth rate that sets the model's equity value equal to today's market cap. What the price assumes, not a forecast.",
+            "discount_rate": f"CAPM: currency-matched risk-free rate + beta x {valuation.PRIMA_RIESGO_MERCADO * 100:.0f}% ERP, beta clamped to [{valuation.BETA_MIN}, {valuation.BETA_MAX}], rate clamped to [{valuation.KE_MIN * 100:.0f}%, {valuation.KE_MAX * 100:.0f}%]. Only USD has a live quote (^TNX); other currencies use a documented static rate, flagged per company in risk_free_source.",
+            "implied_growth": "Reverse DCF — the FCF growth rate that sets the model's equity value equal to today's market cap. What the price assumes, not a forecast. Available for every company, since it needs no history.",
+            "trend_test": f"A projection is only made when a least-squares line through log FCF reaches R2 >= {valuation.R2_MINIMO_PARA_PROYECTAR}. Below that the series is a path rather than a direction, dcf_value_per_share is null and dcf_skipped_reason says so.",
             "projected_growth_band_pct": [valuation.G_MODELADO_MIN * 100, valuation.G_MODELADO_MAX * 100],
-            "probability": "P(growth >= implied growth) under a Student-t fitted to the company's own year-on-year FCF growth. Small-sample base rate from its own history, not a market-implied probability.",
+            "probability": f"P(growth >= implied growth) under a Student-t fitted to the company's own year-on-year FCF growth in log space. Withheld entirely above a log stdev of {valuation.LOG_STDEV_MAX_PUBLICABLE}, where it would be indistinguishable from a coin flip.",
+            "known_limits": [
+                "Typically 3 year-on-year growth observations per company — yfinance exposes only 4-5 annual statements. Every probability is a small-sample estimate and is published as a range.",
+                "A 4-year FCF window can catch a trough, a spike or both and mistake it for a trend. The R2 test is the guard against this, not a cure.",
+                "Terminal growth is a single 2.5% applied to every business regardless of its long-run ceiling; dcf_terminal_value_share_pct shows how much of each valuation rests on it.",
+                "The model sees free cash flow only — no revenue detail, margins, guidance or segments. A one-off legal settlement, licensing payment or deferred capex is indistinguishable from a genuine trend change, which is why revenue growth is carried alongside as a corroboration check.",
+                "Levered FCF is compared directly against market cap with no net-debt bridge — a deliberate simplification for data robustness across 500 tickers.",
+            ],
         },
         "valuations": valoraciones,
         "valuation_failed": valoraciones_fallidas,
