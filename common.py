@@ -18,6 +18,9 @@ import yfinance as yf
 import anthropic
 from ddgs import DDGS
 
+import valuation
+from valuation import analizar_valoraciones
+
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 
@@ -370,6 +373,87 @@ Rules:
 
 
 # ==============================================================================
+# AGENTE DE VALORACIÓN — DCF INVERSO VS DCF HISTÓRICO
+# ==============================================================================
+def generar_informe_valoracion(valoraciones: list, universo_nombre: str) -> str:
+    """Comentario de segundo nivel sobre la brecha entre lo que el precio asume
+    y lo que la empresa ha hecho históricamente.
+
+    No usa la herramienta de búsqueda: todo lo que necesita ya está calculado en
+    valuation.py, y dejar que buscara noticias solo invitaría a mezclar narrativa
+    con la aritmética, que es justo lo que este informe intenta separar.
+    """
+    client = _claude_client()
+    prompt_analista = f"""
+You are a valuation analyst writing in the spirit of Howard Marks's second-level
+thinking: the question is not "is this a good company?" but "what does today's
+price already assume, and how often has that actually happened?"
+
+For each company that passed the {universo_nombre} quality screen, a two-stage
+DCF has been run on levered free cash flow:
+
+- Discount rate: CAPM cost of equity (10-year Treasury + beta x 5% equity risk
+  premium), with beta clamped to [0.5, 2.0] and the resulting rate to [7%, 15%].
+- Horizon: 10 explicit years plus a Gordon terminal value at 2.5% perpetual growth.
+- `implied_growth_pct` is the REVERSE DCF: the annual FCF growth rate that makes
+  the model's equity value equal today's market capitalisation. It is what the
+  market is pricing in, not a forecast.
+- `historical_growth_pct` is the company's actual FCF CAGR over the years available.
+- `modelled_growth_pct` is what the forward DCF actually projected. When
+  `historical_growth_capped` is true it was clamped to the [-15%, +25%] band,
+  because an unclamped cyclical CAGR produces a fantasy valuation.
+- `dcf_value_per_share` / `dcf_upside_pct` come from projecting `modelled_growth_pct`.
+- `probability.probability_pct` is P(growth >= implied growth) under a Student-t
+  fitted to that company's own year-on-year FCF growth in LOG space, with
+  `probability.observations` data points. Treat it as a rough base rate from a
+  very small sample, never as a market-implied probability.
+- `probability.historical_log_stdev` is the volatility of that growth. It is the
+  single best guide to how much the probability is worth: below ~0.2 the company
+  compounds steadily and the number means something; above ~1.0 the cash flows
+  swing so violently that the probability is barely better than a coin flip, and
+  you should say so rather than quoting it as though it were precise.
+
+Valuation data:
+{json.dumps(valoraciones, indent=2, ensure_ascii=False, default=str)}
+
+Instructions:
+1. For each company, state plainly what the price is assuming, how that compares
+   with what the business has actually delivered, and which way the gap cuts.
+2. Interpret the probability honestly. A high number means this company's own
+   history cleared that bar often; it says nothing about whether the future will.
+3. Rank the companies by how undemanding their embedded expectations are — the
+   widest favourable gap between what is priced in and what history delivered.
+4. Close with a section on where this model is most likely to be wrong.
+
+Rules:
+- Write the entire report in English.
+- Every company whose `historical_growth_capped` is true must be flagged as such
+  in its own section, with the reason the raw CAGR was not projectable.
+- Only use the numbers above. Do not invent revenue, margins, guidance, segment
+  detail or news. You have no search tool here and no other source.
+- A negative `implied_growth_pct` means the price is assuming the business
+  shrinks — say so explicitly rather than calling the stock "cheap".
+- Flag small-sample fragility wherever `probability.observations` is under 4.
+- This is research commentary, not investment advice. Do not recommend buying,
+  selling or holding, and do not suggest position sizes or portfolio weightings.
+"""
+    messages = [{"role": "user", "content": prompt_analista}]
+
+    print("\n" + "=" * 70)
+    print(f"🤖 Agente Claude ({MODELO}) activado: analizando la brecha de valoración...")
+    print("=" * 70 + "\n")
+
+    response = _mensaje(client, messages, usar_tools=False)
+
+    if response.stop_reason == "refusal":
+        raise RuntimeError("El modelo declinó generar el informe de valoración.")
+
+    contenido = _texto_de(response)
+    print(contenido)
+    return contenido
+
+
+# ==============================================================================
 # SCREENER DE FONDOS TRANSPARENTES (ETFs UCITS) — API PÚBLICA DE ISHARES
 # ==============================================================================
 ISHARES_PRODUCT_DATA_URL = (
@@ -689,6 +773,23 @@ def run_pipeline(
     else:
         print("Ninguna empresa cumplió los filtros esta semana — se omite la llamada a Claude.")
 
+    # Etapa de valoración. Va después del informe cualitativo y en su propio
+    # try: son dos preguntas independientes ("¿es buena?" y "¿qué asume el
+    # precio?"), así que un fallo aquí no debe costar el informe que ya está
+    # escrito, ni al revés.
+    valoraciones, valoraciones_fallidas, valuation_report = [], [], None
+    if empresas_seleccionadas:
+        try:
+            valoraciones, valoraciones_fallidas = analizar_valoraciones(
+                empresas_seleccionadas,
+                pausa_entre_tickers=pausa_entre_tickers,
+            )
+            if valoraciones:
+                valuation_report = generar_informe_valoracion(valoraciones, universo_nombre)
+        except Exception as e:
+            print(f"⚠️  La etapa de valoración falló: {type(e).__name__}: {e}")
+            print("   Se guarda el JSON sin el bloque de valoración.")
+
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "universe_size": len(todos_los_tickers),
@@ -697,6 +798,18 @@ def run_pipeline(
         "companies": empresas_seleccionadas,
         "failed": tickers_fallidos,
         "report": report_text,
+        "valuation_method": {
+            "model": "Two-stage DCF on levered free cash flow (FCF discounted at cost of equity, compared with market cap — no net-debt bridge)",
+            "horizon_years": valuation.HORIZONTE_ANIOS,
+            "terminal_growth_pct": valuation.CRECIMIENTO_TERMINAL * 100,
+            "discount_rate": f"CAPM: 10y Treasury + beta x {valuation.PRIMA_RIESGO_MERCADO * 100:.0f}% ERP, beta clamped to [{valuation.BETA_MIN}, {valuation.BETA_MAX}], rate clamped to [{valuation.KE_MIN * 100:.0f}%, {valuation.KE_MAX * 100:.0f}%]",
+            "implied_growth": "Reverse DCF — the FCF growth rate that sets the model's equity value equal to today's market cap. What the price assumes, not a forecast.",
+            "projected_growth_band_pct": [valuation.G_MODELADO_MIN * 100, valuation.G_MODELADO_MAX * 100],
+            "probability": "P(growth >= implied growth) under a Student-t fitted to the company's own year-on-year FCF growth. Small-sample base rate from its own history, not a market-implied probability.",
+        },
+        "valuations": valoraciones,
+        "valuation_failed": valoraciones_fallidas,
+        "valuation_report": valuation_report,
     }
 
     os.makedirs(DATA_DIR, exist_ok=True)

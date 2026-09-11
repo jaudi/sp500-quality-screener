@@ -10,7 +10,9 @@ output is a committed file under `data/`.
 ## Layout
 
 - `common.py` — everything shared: technical indicators, the quality filter, the
-  web-search tool, the Claude agent, and both pipeline runners
+  web-search tool, the Claude agents, and both pipeline runners
+- `valuation.py` — the reverse-DCF stage. Pure arithmetic and yfinance, no
+  Claude, so it can be tested without spending tokens.
 - `screener.py` / `screener_ibex35.py` / `screener_funds.py` — thin entry points.
   Each one only knows how to source its universe, then calls into `common.py`.
 - `data/latest-report.json` · `latest-report-ibex35.json` · `latest-report-funds.json`
@@ -66,6 +68,50 @@ Things that will bite you:
   shared request helper affects both.
 - If the report fails, `run_pipeline` still writes the screening results without
   it. Losing the commentary should never lose the week's data.
+
+## The valuation stage (reverse DCF)
+
+Runs after the screening report, on the names that passed. Two-stage DCF on
+levered free cash flow: 10 explicit years plus a Gordon terminal at 2.5%,
+discounted at a CAPM cost of equity (10y Treasury + beta × 5% ERP, beta clamped
+to [0.5, 2.0], the rate to [7%, 15%]) and compared straight against market cap —
+no net-debt bridge. FCFF/WACC would be more orthodox but needs yfinance fields
+that come back empty on too many tickers.
+
+It answers three questions per company and adds them to the JSON under
+`valuations`, `valuation_method` and `valuation_report`:
+
+1. `implied_growth_pct` — the reverse DCF. Bisection for the FCF growth that
+   makes equity value equal today's market cap. **This is what the price
+   assumes, not a forecast.**
+2. `historical_growth_pct` — the actual FCF CAGR, and the DCF that comes from
+   projecting it.
+3. `probability` — P(growth ≥ implied) under a Student-t fitted to the company's
+   own year-on-year growth.
+
+Things that will bite you:
+
+- **Growth statistics must stay in log space.** Arithmetic year-on-year growth
+  does not cancel over a collapse and rebound: Newmont's FCF of
+  [1089, 97, 2961, 7299] averages to *+1,003% a year* with a stdev of 1,693%,
+  and any probability built on that is noise wearing a lab coat. In logs the
+  round trip cancels and the geometric mean comes back equal to the CAGR — which
+  is the invariant to test against if you touch this.
+- **The projected growth is clamped to [-15%, +25%] and the reverse-DCF search
+  is not.** They are different things: one is a forecast that has to be
+  defensible, the other is an unknown being solved for. Unclamped, Newmont's 88%
+  CAGR projected out to a fair value of $8,335 against a $128 price. The clamp
+  sets `historical_growth_capped`, and the agent is instructed to flag it.
+- **`probability.historical_log_stdev` is what makes the probability readable.**
+  Below ~0.2 the company compounds steadily and the number means something;
+  above ~1.0 it is barely better than a coin flip.
+- **n is 3, sometimes 4.** yfinance gives 4–5 annual statements, so the Student-t
+  is doing real work here — a normal would understate the tails badly. `scipy`
+  is deliberately not a dependency; the t CDF is a ~40-line incomplete beta.
+- Negative latest FCF, a currency mismatch between quote and filings, or fewer
+  than two years of history all raise and land in `valuation_failed` rather than
+  producing a number built on gaps.
+- Like the screening report, a failure here never costs the week's data.
 
 ## Secrets
 
