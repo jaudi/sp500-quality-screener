@@ -698,7 +698,11 @@ def analizar_valoracion(ticker: str, precio_cribado: float | None = None) -> dic
         "market_cap": capitalizacion,
         "currency": divisa_estados or divisa_precio,
         "price": round(precio, 2) if precio else None,
-        "fcf_latest": fcf_base,
+        # El último ejercicio de verdad. Durante un tiempo esta clave llevó
+        # dentro la base normalizada, así que decía "latest" y enseñaba una
+        # media de tres años: para Adobe, 8.222M donde el último ejercicio
+        # fueron 9.852M. El valor que usa el DCF es fcf_base_normalised.
+        "fcf_latest": round(serie_fcf[-1], 0),
         "fcf_source": fuente_fcf,
         "fcf_years": len(serie_fcf),
         "fcf_series": [round(v, 0) for v in serie_fcf],
