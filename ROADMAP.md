@@ -88,9 +88,12 @@ que no se puede analizar, no lo que puntúa bajo.
       marcha, así que no puede rankear: hay que recoger todo el universo primero
       y puntuar después. Es el cambio estructural del que dependen los demás.
       *Dificultad: media-alta. Reescribe `filtrar_acciones_*`.*
-- [ ] **Generalizar `_puntuar_y_ordenar` a un motor de factores** con pesos por
-      screener. El código ya existe para tres columnas; se trata de hacerlo
-      configurable. *Dificultad: media.*
+- [x] **Motor de factores** (`factores.py` + `test_factores.py`). Rango
+      percentil por métrica, media por factor, combinación ponderada. Aritmética
+      pura: se prueba entero sin red y sin tokens, como `valuation.py`. Los pesos
+      de los tres screeners viven en `PESOS` y las 33 pruebas verifican que
+      cambiarlos cambia el orden, que un outlier no distorsiona la escala y que
+      un hueco de datos no se convierte en un cero.
 - [ ] **Rankear sobre el universo completo, no sobre los supervivientes.** Hoy el
       score del Nasdaq se calcula entre los 11 que pasan, así que un nombre sube
       porque otro salió, no porque haya mejorado. *Dificultad: baja una vez
