@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-12T20:21:47.266650+00:00",
+  "generated_at": "2026-09-12T20:38:58.290523+00:00",
   "screen": "nasdaq100",
   "universe_source": "slickcharts.com/nasdaq100 (live)",
   "count": 100,
@@ -114,7 +114,9 @@
     "missing_data": "A metric a company does not report scores nothing — never zero. Scoring a gap as the worst possible value punishes a company for a data provider's omission, and that is the kind of error that never appears in the table and decides the order anyway. A factor is averaged over the metrics that exist, and the weights are renormalised over the factors that exist.",
     "coverage": "Because weights renormalise, a company with thin data scores as confidently as a complete one. cobertura_pct is published alongside every score for exactly that reason: 90 on 40% coverage is an opinion about very little.",
     "what_the_score_is_not": "The score is a position within this index, not a grade and not a valuation. A company's score moves when other companies move. It says nothing about whether the name is worth owning, and it is not a recommendation.",
-    "read_the_breakdown": "The per-factor scores matter more than the total. 'Cheap and high quality but no momentum' is a statement you can argue with; a composite of 67 is not."
+    "read_the_breakdown": "The per-factor scores matter more than the total. 'Cheap and high quality but no momentum' is a statement you can argue with; a composite of 67 is not.",
+    "two_stage": "Four factors are ranked across the whole index (100 companies). The fifth, expectativas, comes from a reverse DCF that reads SEC filings and cannot run at that scale, so the top 25 are valued and ranked on it among themselves. The other four keep their index-wide percentile — re-ranking them inside an already-selected group would measure something different and read as if it did not.",
+    "report_size": "The 10 highest-scoring companies go into the written report. That number is chosen rather than whatever a threshold happened to admit, which is what makes the cost of the run predictable."
   },
   "companies": [
     {
@@ -235,13 +237,14 @@
       "ticker": "FTNT",
       "nombre": "Fortinet, Inc.",
       "sector": "Technology",
-      "score": 69.7,
+      "score": 64.6,
       "cobertura_pct": 94,
       "factores": {
         "growth": 69.0,
         "quality": 85.5,
         "value": 23.6,
-        "momentum": 89.6
+        "momentum": 89.6,
+        "expectativas": 35.7
       },
       "per": 55.34,
       "per_normalizado": 81.74,
@@ -267,7 +270,7 @@
       "retorno_6m": 87.04,
       "retorno_12m": 92.94,
       "distancia_ma200_pct": 39.82,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -3.3
     },
     {
       "ticker": "AMD",
@@ -349,13 +352,14 @@
       "ticker": "DXCM",
       "nombre": "DexCom, Inc.",
       "sector": "Healthcare",
-      "score": 67.9,
+      "score": 68.4,
       "cobertura_pct": 94,
       "factores": {
         "growth": 75.9,
         "quality": 70.7,
         "value": 48.1,
-        "momentum": 68.0
+        "momentum": 68.0,
+        "expectativas": 71.4
       },
       "per": 32.82,
       "per_normalizado": 54.6,
@@ -381,19 +385,20 @@
       "retorno_6m": 29.25,
       "retorno_12m": 9.25,
       "distancia_ma200_pct": 16.3,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -46.3
     },
     {
       "ticker": "NVDA",
       "nombre": "NVIDIA Corporation",
       "sector": "Technology",
-      "score": 67.4,
+      "score": 72.3,
       "cobertura_pct": 94,
       "factores": {
         "growth": 95.6,
         "quality": 62.0,
         "value": 22.4,
-        "momentum": 64.3
+        "momentum": 64.3,
+        "expectativas": 100.0
       },
       "per": 27.63,
       "per_normalizado": 92.85,
@@ -419,7 +424,7 @@
       "retorno_6m": 21.38,
       "retorno_12m": 23.5,
       "distancia_ma200_pct": 10.75,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -145.4
     },
     {
       "ticker": "NBIS",
@@ -463,13 +468,14 @@
       "ticker": "DDOG",
       "nombre": "Datadog, Inc.",
       "sector": "Technology",
-      "score": 66.2,
+      "score": 69.1,
       "cobertura_pct": 94,
       "factores": {
         "growth": 84.3,
         "quality": 59.0,
         "value": 14.6,
-        "momentum": 84.9
+        "momentum": 84.9,
+        "expectativas": 85.7
       },
       "per": 433.75,
       "per_normalizado": 1096.0,
@@ -495,19 +501,20 @@
       "retorno_6m": 77.65,
       "retorno_12m": 58.97,
       "distancia_ma200_pct": 24.69,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -58.9
     },
     {
       "ticker": "MRVL",
       "nombre": "Marvell Technology, Inc.",
       "sector": "Technology",
-      "score": 65.7,
+      "score": 55.8,
       "cobertura_pct": 88,
       "factores": {
         "growth": 73.7,
         "quality": 53.8,
         "value": 23.3,
-        "momentum": 97.3
+        "momentum": 97.3,
+        "expectativas": 0.0
       },
       "per": 78.18,
       "per_normalizado": 1233.27,
@@ -533,7 +540,7 @@
       "retorno_6m": 168.92,
       "retorno_12m": 255.31,
       "distancia_ma200_pct": 52.56,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": 32.4
     },
     {
       "ticker": "ARM",
@@ -615,13 +622,14 @@
       "ticker": "DASH",
       "nombre": "DoorDash, Inc.",
       "sector": "Consumer Cyclical",
-      "score": 64.5,
+      "score": 66.6,
       "cobertura_pct": 81,
       "factores": {
         "growth": 82.8,
         "quality": 66.4,
         "value": 48.5,
-        "momentum": 47.1
+        "momentum": 47.1,
+        "expectativas": 78.6
       },
       "per": 105.18,
       "per_normalizado": null,
@@ -647,7 +655,7 @@
       "retorno_6m": 25.15,
       "retorno_12m": -22.38,
       "distancia_ma200_pct": 7.12,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -47.3
     },
     {
       "ticker": "PLTR",
@@ -659,7 +667,8 @@
         "growth": 96.0,
         "quality": 69.6,
         "value": 8.1,
-        "momentum": 53.5
+        "momentum": 53.5,
+        "expectativas": 64.3
       },
       "per": 142.93,
       "per_normalizado": 835.76,
@@ -685,19 +694,20 @@
       "retorno_6m": 10.79,
       "retorno_12m": 1.75,
       "distancia_ma200_pct": 10.37,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -19.9
     },
     {
       "ticker": "CRWD",
       "nombre": "CrowdStrike Holdings, Inc.",
       "sector": "Technology",
-      "score": 64.3,
+      "score": 68.6,
       "cobertura_pct": 75,
       "factores": {
         "growth": 79.8,
         "quality": 50.9,
         "value": 16.3,
-        "momentum": 90.6
+        "momentum": 90.6,
+        "expectativas": 92.9
       },
       "per": 5168.5,
       "per_normalizado": null,
@@ -723,7 +733,7 @@
       "retorno_6m": 87.19,
       "retorno_12m": 90.82,
       "distancia_ma200_pct": 43.45,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -63.5
     },
     {
       "ticker": "ALAB",
@@ -767,13 +777,14 @@
       "ticker": "MSFT",
       "nombre": "Microsoft Corporation",
       "sector": "Technology",
-      "score": 63.6,
+      "score": 56.2,
       "cobertura_pct": 94,
       "factores": {
         "growth": 72.2,
         "quality": 62.6,
         "value": 48.4,
-        "momentum": 63.0
+        "momentum": 63.0,
+        "expectativas": 14.3
       },
       "per": 27.63,
       "per_normalizado": 37.17,
@@ -799,19 +810,20 @@
       "retorno_6m": 25.81,
       "retorno_12m": -0.26,
       "distancia_ma200_pct": 15.36,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": 13.2
     },
     {
       "ticker": "LRCX",
       "nombre": "Lam Research Corporation",
       "sector": "Technology",
-      "score": 62.7,
+      "score": 54.4,
       "cobertura_pct": 94,
       "factores": {
         "growth": 73.9,
         "quality": 57.5,
         "value": 22.3,
-        "momentum": 81.5
+        "momentum": 81.5,
+        "expectativas": 7.1
       },
       "per": 51.77,
       "per_normalizado": 71.21,
@@ -837,19 +849,20 @@
       "retorno_6m": 40.64,
       "retorno_12m": 159.45,
       "distancia_ma200_pct": 12.97,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": 16.4
     },
     {
       "ticker": "VRTX",
       "nombre": "Vertex Pharmaceuticals Incorpor",
       "sector": "Healthcare",
-      "score": 62.3,
+      "score": 61.5,
       "cobertura_pct": 94,
       "factores": {
         "growth": 68.8,
         "quality": 62.5,
         "value": 51.6,
-        "momentum": 60.3
+        "momentum": 60.3,
+        "expectativas": 57.1
       },
       "per": 30.04,
       "per_normalizado": 50.45,
@@ -875,19 +888,20 @@
       "retorno_6m": 9.82,
       "retorno_12m": 29.71,
       "distancia_ma200_pct": 10.13,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -17.7
     },
     {
       "ticker": "META",
       "nombre": "Meta Platforms, Inc.",
       "sector": "Communication Services",
-      "score": 61.6,
+      "score": 59.9,
       "cobertura_pct": 94,
       "factores": {
         "growth": 73.3,
         "quality": 67.9,
         "value": 59.6,
-        "momentum": 39.4
+        "momentum": 39.4,
+        "expectativas": 50.0
       },
       "per": 24.39,
       "per_normalizado": 35.67,
@@ -913,7 +927,7 @@
       "retorno_6m": 5.78,
       "retorno_12m": -13.42,
       "distancia_ma200_pct": 4.09,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -16.2
     },
     {
       "ticker": "PDD",
@@ -957,13 +971,14 @@
       "ticker": "GOOGL",
       "nombre": "Alphabet Inc.",
       "sector": "Communication Services",
-      "score": 59.8,
+      "score": 54.0,
       "cobertura_pct": 94,
       "factores": {
         "growth": 70.2,
         "quality": 58.7,
         "value": 46.1,
-        "momentum": 55.6
+        "momentum": 55.6,
+        "expectativas": 21.4
       },
       "per": 16.98,
       "per_normalizado": 45.24,
@@ -989,19 +1004,20 @@
       "retorno_6m": 12.12,
       "retorno_12m": 41.19,
       "distancia_ma200_pct": 0.63,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": 7.3
     },
     {
       "ticker": "GOOG",
       "nombre": "Alphabet Inc.",
       "sector": "Communication Services",
-      "score": 59.7,
+      "score": 55.0,
       "cobertura_pct": 94,
       "factores": {
         "growth": 70.2,
         "quality": 58.7,
         "value": 47.0,
-        "momentum": 54.5
+        "momentum": 54.5,
+        "expectativas": 28.6
       },
       "per": 16.83,
       "per_normalizado": 44.83,
@@ -1027,19 +1043,20 @@
       "retorno_6m": 11.41,
       "retorno_12m": 39.68,
       "distancia_ma200_pct": 0.09,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": 7.2
     },
     {
       "ticker": "BKR",
       "nombre": "Baker Hughes Company",
       "sector": "Energy",
-      "score": 58.7,
+      "score": 56.3,
       "cobertura_pct": 94,
       "factores": {
         "growth": 59.1,
         "quality": 50.7,
         "value": 79.1,
-        "momentum": 50.8
+        "momentum": 50.8,
+        "expectativas": 42.9
       },
       "per": 18.99,
       "per_normalizado": 33.94,
@@ -1065,7 +1082,7 @@
       "retorno_6m": 9.61,
       "retorno_12m": 27.71,
       "distancia_ma200_pct": 1.1,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -11.2
     },
     {
       "ticker": "WDAY",
@@ -1455,7 +1472,7 @@
       "cobertura_pct": 94,
       "factores": {
         "growth": 87.7,
-        "quality": 42.9,
+        "quality": 43.0,
         "value": 28.3,
         "momentum": 41.1
       },
