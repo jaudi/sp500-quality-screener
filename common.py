@@ -540,6 +540,8 @@ def _metricas_de_cuentas(ticker_obj) -> dict:
         "margen_operativo": None,
         "beneficio_en_pico": None,
         "activos_totales": None,
+        "roic": None,
+        "ebit": None,
         "anios_de_cuentas": 0,
     }
 
@@ -554,11 +556,18 @@ def _metricas_de_cuentas(ticker_obj) -> dict:
     # devengos salían None en el 100% de los tickers, y un factor que nunca
     # puntúa no se nota en la tabla: simplemente deja de pesar sin avisar.
     activos = None
+    capital_invertido = None
     try:
         balance = ticker_obj.balance_sheet
         fila_activos = _fila_cuentas(balance, "Total Assets")
         if fila_activos is not None:
             activos = float(fila_activos.iloc[0])
+        # yfinance publica el capital invertido ya calculado. Reconstruirlo a
+        # mano (deuda + fondos propios − caja) daría un número ligeramente
+        # distinto por ticker según qué partidas incluya cada sector.
+        fila_capital = _fila_cuentas(balance, "Invested Capital")
+        if fila_capital is not None:
+            capital_invertido = float(fila_capital.iloc[0])
     except Exception:
         pass
 
@@ -601,6 +610,15 @@ def _metricas_de_cuentas(ticker_obj) -> dict:
     if ebit is not None and len(ebit):
         if ingresos is not None and len(ingresos) and float(ingresos.iloc[0]) > 0:
             salida["margen_operativo"] = round(float(ebit.iloc[0]) / float(ingresos.iloc[0]) * 100, 2)
+        salida["ebit"] = float(ebit.iloc[0])
+        # ROIC = NOPAT / capital invertido. Es la métrica de calidad que querían
+        # los tres —Marks, Lynch y Simons— y la única que yfinance no expone en
+        # `info` para ningún ticker: `returnOnCapital` viene siempre vacío.
+        tasa = _fila_cuentas(cuentas, "Tax Rate For Calcs")
+        tipo_impositivo = float(tasa.iloc[0]) if tasa is not None and len(tasa) else 0.21
+        if capital_invertido and capital_invertido > 0:
+            nopat = float(ebit.iloc[0]) * (1 - tipo_impositivo)
+            salida["roic"] = round(nopat / capital_invertido * 100, 2)
         if intereses is not None and len(intereses):
             gasto = abs(float(intereses.iloc[0]))
             # Sin deuda que pagar la cobertura es infinita, no cero. Se tapa en
@@ -693,6 +711,9 @@ def recolectar_universo(
                 "distancia_ma200_pct": round(
                     (tecnicos["precio_actual"] / tecnicos["ma200"] - 1) * 100, 2
                 ) if tecnicos["ma200"] else None,
+                # ── se rellenan más abajo, con las cuentas anuales ──
+                "ev_ebit": None,
+                "roic": None,
                 # ── se rellena en la segunda etapa, tras el DCF inverso ──
                 "exceso_implicito_pp": None,
             }
@@ -709,6 +730,14 @@ def recolectar_universo(
                 # sobre el del último año. Es el arreglo de raíz del problema
                 # cíclico: contra la media, una minera en pico deja de parecer
                 # barata.
+                # EV/EBIT en vez de EV/EBITDA: la amortización es un coste real
+                # en un negocio intensivo en capital, y restarla iguala a una
+                # minera con una empresa de software que no tiene qué amortizar.
+                ebit_actual = fila.get("ebit")
+                valor_empresa = info.get("enterpriseValue")
+                if valor_empresa and ebit_actual and ebit_actual > 0:
+                    fila["ev_ebit"] = round(valor_empresa / ebit_actual, 2)
+
                 bn = fila.get("beneficio_normalizado")
                 fila["per_normalizado"] = (
                     round(capitalizacion / bn, 2) if capitalizacion and bn and bn > 0 else None
@@ -1277,6 +1306,191 @@ def run_pipeline_crecimiento(
             "excluded_on_purpose": "There is no P/E, ROE or debt filter. In this index a P/E under 20 rejects almost the whole universe, and what it lets through is the least representative of what the index is. A low multiple here does not signal quality; it signals that the market has stopped expecting growth.",
             "score": "Within-cohort percentile rank, averaged over revenue growth, earnings growth and 6-month return. 100 means best of the names that passed this week, not best company — a name's score moves when the rest of the cohort moves. Ranks rather than raw values, so that one company emerging from a cyclical trough with triple-digit earnings growth cannot dominate the average.",
         },
+        "valuation_method": _metodo_valoracion(),
+        "valuations": valoraciones,
+        "valuation_failed": valoraciones_fallidas,
+        "valuation_report": valuation_report,
+    }
+
+    return _escribir_json(output_filename, output)
+
+
+# ==============================================================================
+# RUNNER MULTIFACTOR — dos pasadas, dos etapas de puntuación
+# ==============================================================================
+def generar_informe_multifactor(empresas: list, universo_nombre: str, pesos: dict) -> str:
+    """Informe cualitativo sobre los mejores del ranking multifactor.
+
+    La diferencia con los otros dos informes es que aquí las empresas no "pasaron
+    un filtro": ocupan un puesto. El prompt tiene que dejar eso claro o el modelo
+    escribirá sobre ellas como si hubieran superado un listón absoluto.
+    """
+    client = _claude_client()
+    prompt = f"""
+You are a senior investment analyst. The companies below are the top of a multifactor ranking of {universo_nombre}.
+
+Important: these companies did not pass a filter. They were ranked against every other company in the index on five factors, and these came out highest. A score of 70 means "70th percentile within this index this week", not "good" and not "cheap". A company's score moves when other companies move.
+
+Factor weights for this screen: {factores.describir_pesos(pesos)}
+
+- value — what you pay for what the business earns and owns, on NORMALISED earnings (a multi-year average), not the last twelve months
+- quality — returns on capital, margins, accruals, leverage, interest cover
+- growth — revenue and earnings growth against a multi-year base
+- momentum — whether the price agrees
+- expectativas — how much growth today's price already demands (reverse DCF) against what the business has actually delivered
+
+Ranked companies, with their per-factor scores:
+{json.dumps(empresas, indent=2, ensure_ascii=False, default=str)}
+
+Instructions:
+1. Use the search tool to research the current state and recent news for EACH company.
+2. Produce a structured executive report containing:
+   - For each company: which factors carry its score and which drag it, and whether the story behind those numbers holds up. A high score built on one factor is a different proposition from one built on four.
+   - Where `beneficio_en_pico` is true, say so and treat the earnings with suspicion — a cyclical at peak earnings looks cheapest exactly when it is most expensive.
+   - Where `cobertura_pct` is low, say that the score rests on partial data.
+   - A closing ranking by conviction, and where it disagrees with the score order, say why.
+
+Rules:
+- Write the entire report in English.
+- Only state facts supportable from the data above or from what the search tool returns. Do not invent figures, partnerships, deal values or product details.
+- Do not call a company cheap or expensive on the strength of its value score alone — that score is a rank against this index, not a valuation.
+- This is research commentary, not investment advice. No buy, sell or hold recommendations, and no position sizing.
+"""
+    print("\n" + "=" * 70)
+    print(f"🤖 Agente Claude ({MODELO}): informe multifactor...")
+    print("=" * 70 + "\n")
+    return _bucle_agentico(client, [{"role": "user", "content": prompt}])
+
+
+def run_pipeline_multifactor(
+    obtener_tickers_fn,
+    output_filename: str,
+    universo_nombre: str,
+    clave_pesos: str,
+    limite_analisis_default: int = 500,
+    pausa_entre_tickers: float = 0.4,
+    top_n_valoracion: int = 25,
+    top_n_informe: int = 10,
+) -> str:
+    """Cribado multifactor completo. Devuelve la ruta del JSON escrito.
+
+    ## Por qué dos etapas de puntuación
+
+    Cuatro de los cinco factores salen de datos baratos: `info` y el histórico de
+    precios, ~1 segundo por ticker. El quinto, `expectativas`, sale del DCF
+    inverso, que consulta los filings de la SEC y tarda órdenes de magnitud más.
+    Correrlo sobre 500 nombres no es viable.
+
+    Así que: se rankea el universo entero con los cuatro baratos, se corta una
+    lista de `top_n_valoracion`, se valoran sólo esos, y se recombina.
+
+    ## Lo que NO se hace en la etapa 2
+
+    No se vuelve a rankear todo dentro de la lista corta. Sería tentador —una
+    llamada más a `puntuar_factores`— y estaría mal: los percentiles dentro de un
+    grupo ya seleccionado miden algo distinto. Una empresa en el percentil 90 de
+    valor del índice puede ser la percentil 30 entre 25 empresas todas baratas, y
+    publicar ese 30 al lado de la palabra "value" engañaría.
+
+    Los cuatro factores conservan su percentil **contra el índice entero**. Sólo
+    `expectativas` se rankea dentro de la lista corta, porque no existe fuera de
+    ella, y eso queda dicho en la metodología.
+
+    ## Control de coste
+
+    `top_n_informe` fija cuántas empresas entran al prompt de Claude, que es lo
+    único que se factura aquí. Con filtros duros ese número lo decidía el mercado
+    —seis nombres una semana, treinta otra— y la factura iba detrás. Con un
+    ranking se elige.
+    """
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise ValueError("⚠️ La variable de entorno ANTHROPIC_API_KEY no está definida.")
+
+    pesos = factores.PESOS[clave_pesos]
+
+    resultado = obtener_tickers_fn()
+    todos_los_tickers, universo_fuente = (
+        resultado if isinstance(resultado, tuple) else (resultado, None)
+    )
+    limite_analisis = int(os.environ.get("SCREENER_LIMIT", str(limite_analisis_default)))
+
+    # ── Pasada 1: recoger sin descartar ──────────────────────────────────────
+    universo, tickers_fallidos = recolectar_universo(
+        todos_los_tickers,
+        limite_analisis=limite_analisis,
+        pausa_entre_tickers=pausa_entre_tickers,
+    )
+    if not universo:
+        raise RuntimeError("No se pudo recoger ningún ticker — se aborta antes de gastar tokens.")
+
+    # ── Etapa 1: ranking con los cuatro factores baratos ─────────────────────
+    # `expectativas` está en los pesos pero vacío en todas las empresas, así que
+    # puntuar_factores lo excluye solo y renormaliza. No hace falta un peso aparte.
+    factores.puntuar_factores(universo, pesos)
+    lista_corta = universo[:top_n_valoracion]
+    print(f"\n🔎 Etapa 1: {len(universo)} rankeados → lista corta de {len(lista_corta)}")
+
+    # ── Valoración sólo sobre la lista corta ─────────────────────────────────
+    valoraciones, valoraciones_fallidas, valuation_report = _etapa_valoracion(
+        lista_corta, universo_nombre, pausa_entre_tickers
+    )
+
+    # `gap_pp` ya es (crecimiento implícito − tendencia real), y sólo existe
+    # cuando la tendencia pasó el test de R². Reutilizarlo en vez de recalcularlo
+    # hereda esa disciplina: donde el ajuste se descartó, no hay factor.
+    por_ticker = {v["ticker"]: v for v in valoraciones}
+    for empresa in lista_corta:
+        valoracion = por_ticker.get(empresa["ticker"])
+        empresa["exceso_implicito_pp"] = valoracion.get("gap_pp") if valoracion else None
+
+    # ── Etapa 2: añadir expectativas sin re-rankear lo demás ─────────────────
+    excesos = [e.get("exceso_implicito_pp") for e in lista_corta]
+    percentiles_exp = factores.rango_percentil(excesos, mayor_es_mejor=False)
+
+    for i, empresa in enumerate(lista_corta):
+        if percentiles_exp[i] is not None:
+            empresa["factores"]["expectativas"] = round(percentiles_exp[i], 1)
+        puntuaciones = empresa["factores"]
+        peso_total = sum(pesos[f] for f in puntuaciones if f in pesos)
+        if peso_total > 0:
+            empresa["score"] = round(
+                sum(puntuaciones[f] * pesos[f] for f in puntuaciones if f in pesos) / peso_total, 1
+            )
+
+    lista_corta.sort(key=lambda e: (e["score"] is not None, e.get("score") or 0), reverse=True)
+    seleccionadas = lista_corta[:top_n_informe]
+    print(f"🔎 Etapa 2: expectativas añadidas → {len(seleccionadas)} al informe")
+
+    # ── Informe ──────────────────────────────────────────────────────────────
+    report_text = _informe_seguro(
+        lambda: generar_informe_multifactor(seleccionadas, universo_nombre, pesos)
+    )
+
+    metodologia = factores.describir_metodologia(pesos)
+    metodologia["two_stage"] = (
+        f"Four factors are ranked across the whole index ({len(universo)} companies). The fifth, "
+        f"expectativas, comes from a reverse DCF that reads SEC filings and cannot run at that scale, "
+        f"so the top {top_n_valoracion} are valued and ranked on it among themselves. The other four "
+        f"keep their index-wide percentile — re-ranking them inside an already-selected group would "
+        f"measure something different and read as if it did not."
+    )
+    metodologia["report_size"] = (
+        f"The {top_n_informe} highest-scoring companies go into the written report. That number is "
+        f"chosen rather than whatever a threshold happened to admit, which is what makes the cost of "
+        f"the run predictable."
+    )
+
+    output = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "universe_size": len(todos_los_tickers),
+        "universe_source": universo_fuente,
+        "analyzed": len(universo),
+        "passed_filters": len(seleccionadas),
+        "screen": clave_pesos,
+        "companies": seleccionadas,
+        "failed": tickers_fallidos,
+        "report": report_text,
+        "methodology": metodologia,
         "valuation_method": _metodo_valoracion(),
         "valuations": valoraciones,
         "valuation_failed": valoraciones_fallidas,

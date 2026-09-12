@@ -90,14 +90,28 @@ que no se puede analizar, no lo que puntúa bajo.
       son ~8 min de Actions — gratis en repo público, y sin coste de API porque
       yfinance no cobra. Incluye beneficio normalizado, devengos de Sloan,
       cobertura de intereses, deuda neta/EBITDA, margen operativo y P/B.
-- [ ] **Enchufar las dos pasadas al runner.** `recolectar_universo` +
-      `puntuar_factores` existen pero nadie los llama todavía; los tres screeners
-      siguen usando `filtrar_acciones_*`. Falta el `run_pipeline_multifactor`
-      con las dos etapas de puntuación (ver abajo). *Dificultad: media.*
-- [ ] **Puntuación en dos etapas.** `expectativas` sale del DCF inverso, que usa
-      SEC EDGAR y no puede correr sobre 500 nombres. El diseño es: rankear el
-      universo con los 4 factores baratos → lista corta de ~25 → DCF sobre esos →
-      score final con los 5. *Dificultad: baja una vez enchufado el runner.*
+- [x] **Runner multifactor** (`run_pipeline_multifactor`), con las dos etapas:
+      ranking del universo con los 4 factores baratos → lista corta → DCF inverso
+      sobre esos → `expectativas` y score final. Los 4 primeros conservan su
+      percentil contra el índice entero; sólo `expectativas` se rankea dentro de
+      la lista corta, porque fuera de ella no existe. `top_n_informe` fija cuántas
+      empresas entran al prompt de Claude, que es lo único facturado.
+- [x] **ROIC y EV/EBIT.** Estaban declarados en `FACTORES` desde el primer commit
+      sin que nadie los calculara. ROIC sale de NOPAT sobre `Invested Capital`
+      del balance; `returnOnCapital` de yfinance viene vacío en todos los tickers.
+- [x] **`test_recoleccion.py`** — comprueba que toda métrica declarada en
+      `FACTORES` se recoge de verdad. El fallo de "métrica declarada que nunca se
+      calcula" había aparecido ya tres veces (devengos, ROIC, EV/EBIT) y no da
+      error: el factor deja de pesar en silencio y el score publicado no es el que
+      dice la metodología.
+- [ ] **Cambiar los tres entry points a `run_pipeline_multifactor`.** El motor
+      está probado de punta a punta pero ningún screener lo usa todavía: los tres
+      siguen llamando a `filtrar_acciones_*`. Es el paso que lo pone en
+      producción. *Dificultad: baja.*
+- [ ] **Decidir qué hacer con `expectativas` ausente.** El test de R² es estricto
+      a propósito, así que en la prueba sólo 4 de 8 empresas obtuvieron el factor.
+      Quien no lo tiene no es penalizado —sus otros factores se reponderan—
+      mientras que quien lo tiene malo sí. Asimetría real, sin decidir.
 - [ ] **Usar `beneficio_en_pico`.** Ya se calcula y no se usa. NEM sigue saliendo
       primera en la prueba pese a que su P/E normalizado es 72x, porque calidad y
       momentum la sostienen. Decidir si el pico es penalización dentro de value o
