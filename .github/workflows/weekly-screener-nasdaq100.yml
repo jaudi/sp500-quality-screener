@@ -1,8 +1,8 @@
-name: Funds Screener
+name: Weekly Nasdaq-100 Growth Screener
 
 on:
   schedule:
-    - cron: "0 6 * * 1" # Every Monday 06:00 UTC, same as the stock screeners
+    - cron: "0 6 * * 3" # Every Wednesday 06:00 UTC (S&P Monday, IBEX Tuesday)
   workflow_dispatch: {}
 
 permissions:
@@ -21,8 +21,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run funds screener
-        run: python screener_funds.py
+      - name: Run Nasdaq-100 growth screener
+        run: python screener_nasdaq100.py
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
@@ -30,11 +30,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/latest-report-funds.json
+          git add data/latest-report-nasdaq100.json
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: funds screener report"
+            git commit -m "chore: weekly Nasdaq-100 growth screener report"
             git pull --rebase origin main
             git push
           fi

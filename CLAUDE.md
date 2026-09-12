@@ -1,4 +1,4 @@
-# Quality Screener Pipeline
+# Screener Pipeline
 
 Python screeners that run in GitHub Actions and write JSON reports into this repo.
 The Next.js portal at financeplots.com reads those JSONs live over
@@ -9,24 +9,26 @@ output is a committed file under `data/`.
 
 ## Layout
 
-- `common.py` — everything shared: technical indicators, the quality filter, the
+- `common.py` — everything shared: technical indicators, both filters, the
   web-search tool, the Claude agents, and both pipeline runners
 - `valuation.py` — the reverse-DCF stage. Pure arithmetic and yfinance, no
   Claude, so it can be tested without spending tokens.
-- `screener.py` / `screener_ibex35.py` / `screener_funds.py` — thin entry points.
-  Each one only knows how to source its universe, then calls into `common.py`.
-- `data/latest-report.json` · `latest-report-ibex35.json` · `latest-report-funds.json`
+- `screener.py` / `screener_ibex35.py` / `screener_nasdaq100.py` — thin entry
+  points. Each one only knows how to source its universe and which runner to
+  call, then goes into `common.py`.
+- `data/latest-report.json` · `latest-report-ibex35.json` · `latest-report-nasdaq100.json`
 
 To add an index, write a new entry point that produces a ticker list and calls
-`run_pipeline`. Don't fork `common.py`.
+`run_pipeline` (quality) or `run_pipeline_crecimiento` (growth). Don't fork
+`common.py` — everything behind the filter is already shared by both runners.
 
 ## Schedule
 
-| Workflow | Cron | Entry point |
-|---|---|---|
-| Weekly Quality Screener | Mon 06:00 UTC | `screener.py` |
-| Funds Screener | Mon 06:00 UTC | `screener_funds.py` |
-| Weekly IBEX 35 | Tue 06:00 UTC | `screener_ibex35.py` |
+| Workflow | Cron | Entry point | Screen |
+|---|---|---|---|
+| Weekly Quality Screener | Mon 06:00 UTC | `screener.py` | quality |
+| Weekly IBEX 35 | Tue 06:00 UTC | `screener_ibex35.py` | quality |
+| Weekly Nasdaq-100 | Wed 06:00 UTC | `screener_nasdaq100.py` | growth |
 
 All three also accept `workflow_dispatch`, so you can trigger a run by hand:
 
@@ -37,15 +39,51 @@ gh workflow run weekly-screener.yml -R jaudi/sp500-quality-screener
 Each workflow commits its report back to `main` as a `chore:` commit. Expect
 origin to be ahead of your local clone after a run.
 
-## Filters
+## The two screens
 
-Stocks: ROE > 20%, P/E < 20, Debt/Equity < 100%, RSI(14) > 30, price > MA50.
-The S&P run adds ROA > 12% for six criteria; the IBEX run passes
-`roa_minimo=None` and applies five, because the smaller universe leaves too few
-names otherwise. The count is derived, not hardcoded — see `num_filtros`.
+There are two filters, not one, and which one an index gets is a judgement about
+the index.
 
-Funds: iShares UCITS ETFs only, domiciled IE/GB/LU, TER < 0.20%, equity,
-LSE listing preferred, ranked by 3-year Sharpe.
+**Quality** (`filtrar_acciones_calidad`) — ROE > 20%, P/E < 20, Debt/Equity <
+100%, RSI(14) > 30, price > MA50. The S&P run adds ROA > 12% for six criteria;
+the IBEX run passes `roa_minimo=None` and applies five, because the smaller
+universe leaves too few names otherwise. The count is derived, not hardcoded —
+see `num_filtros`.
+
+**Growth** (`filtrar_acciones_crecimiento`) — revenue growth > 10%, earnings
+growth > 10%, positive free cash flow, price > MA50, MA50 > MA200, 6-month return
+> 0, RSI(14) > 40. Seven criteria, no valuation or profitability filter at all.
+
+Why the Nasdaq-100 gets the growth screen: a P/E < 20 filter rejects almost the
+entire index, and what it lets through is the least representative of what the
+index is. A low multiple there does not signal quality — it signals that the
+market has stopped expecting growth, which is the opposite of what the screen is
+looking for. Positive free cash flow is the only quality guardrail kept, and it
+does double duty: it also happens to be what the valuation stage needs, since a
+negative latest FCF makes the reverse DCF fail anyway.
+
+Things that will bite you in the growth screen:
+
+- **`earningsGrowth` is empty on a good number of names.** `earningsQuarterlyGrowth`
+  is the same figure by another route and is used as the fallback. The `is None`
+  check has to stay explicit: a growth rate of exactly 0.0 is data, not a gap,
+  and an `or` would silently treat it as missing.
+- **`score` is a within-cohort percentile rank, not a grade.** 100 means best of
+  what passed this week. It is built from ranks rather than raw values on
+  purpose: one company coming off a cyclical trough with +1,300% earnings growth
+  would otherwise dominate the average and turn three columns into one wearing a
+  disguise. The JSON says this in `criteria.score`, and the agent prompt says it
+  again, because a 0-100 number next to a ticker reads as a grade to everyone.
+- **Momentum needs 14 months of prices, not 4.** `calcular_indicadores_tecnicos`
+  takes `con_tendencia_larga=True` for the MA200 and the 6/12-month returns. The
+  quality screens deliberately don't pay for that longer download across 500
+  tickers.
+- **The universe does not come from Wikipedia.** The components table was removed
+  from the Nasdaq-100 article — there is no ~100-row table left to scrape there.
+  Slickcharts is the live source; if it fails, `NASDAQ100_FALLBACK` in
+  `screener_nasdaq100.py` is a pinned list so the week is never lost to someone
+  else's HTML change. Which one was used lands in the JSON as `universe_source`,
+  not just in the Actions log, because a stale universe is invisible otherwise.
 
 ## The Claude agent
 
@@ -64,8 +102,9 @@ Things that will bite you:
 - **Every `tool_use` block needs a matching `tool_result`,** including unknown
   tools — otherwise the next request fails on an orphaned `tool_use_id`. Return
   all results in a single user message, or the model stops making parallel calls.
-- `generar_informe_fondos` is the other path: no tools, one call. Changing the
-  shared request helper affects both.
+- **The loop itself lives in `_bucle_agentico`,** shared by the quality and
+  growth reports. They ask different questions over the same mechanics; the
+  three traps above are exactly why that mechanic is written once.
 - If the report fails, `run_pipeline` still writes the screening results without
   it. Losing the commentary should never lose the week's data.
 
