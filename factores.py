@@ -208,3 +208,87 @@ def describir_pesos(pesos: dict) -> str:
     """Una línea legible con la tesis del screener, para meterla en el JSON."""
     partes = [f"{f} {int(p)}%" for f, p in sorted(pesos.items(), key=lambda kv: -kv[1])]
     return " · ".join(partes)
+
+
+# Qué mide cada factor, en una frase. Es lo único de la metodología escrito a
+# mano; todo lo demás se genera desde FACTORES y PESOS, para que la explicación
+# publicada no pueda desviarse de la que se ejecutó.
+GLOSA_FACTORES = {
+    "value": "What you pay for what the business earns and owns. Built on normalised earnings rather than the last twelve months, so a company at the top of its cycle does not read as cheap.",
+    "quality": "Whether the business earns its returns on real capital and turns profit into cash. Accruals and leverage sit here because both are ways a good-looking profit can fail to be one.",
+    "growth": "How fast revenue and earnings are compounding, measured against a multi-year base rather than a single prior year — a comparison against one weak year is arithmetic, not growth.",
+    "momentum": "Whether the price agrees. Deliberately the lowest weight in the value screens: a company that has fallen is cheaper, not worse, and momentum should not be able to veto it.",
+    "expectativas": "How much growth today's price already demands, from the reverse DCF, against what the business has actually delivered. It is the only factor that scores the market's expectations rather than the company.",
+}
+
+
+def describir_metodologia(pesos: dict) -> dict:
+    """La metodología completa, generada desde la configuración que se ejecuta.
+
+    Se escribe en el JSON y el portal la renderiza tal cual. Que salga de
+    `FACTORES` y `PESOS` y no de un texto paralelo es el punto: cambiar un peso
+    cambia la explicación publicada en el mismo commit, sin que nadie tenga que
+    acordarse de actualizarla.
+
+    Un score compuesto es opaco por naturaleza — un 67 no se puede discutir. Por
+    eso se publica también el desglose por factor de cada empresa: "barata y de
+    calidad pero sin momentum" sí se puede discutir.
+    """
+    factores_usados = {f: p for f, p in pesos.items() if f in FACTORES}
+
+    return {
+        "approach": (
+            "Factor scoring, not threshold filtering. Every company in the index is ranked against "
+            "every other on each metric, and the ranks are combined with the weights below. Nothing "
+            "is rejected for scoring poorly — only for being impossible to evaluate."
+        ),
+        "why_not_filters": (
+            "A hard filter chain (ROE > 20% AND P/E < 20 AND ...) discards a company at 19.8% ROE as "
+            "readily as one at 3%, empties the screen when no name clears every bar, throws away how "
+            "far each company cleared or missed, and silently gives RSI the same weight as ROE. A "
+            "cross-sectional rank has none of those problems."
+        ),
+        "why_ranks_not_values": (
+            "Scores are built from percentile ranks rather than raw values. One company emerging from "
+            "a cyclical trough at +1,368% earnings growth would otherwise dominate any average and "
+            "turn a multi-factor score into a single column in disguise. A rank treats that as what it "
+            "is — first place — and nothing more."
+        ),
+        "weights": {f: p for f, p in sorted(factores_usados.items(), key=lambda kv: -kv[1])},
+        "weights_summary": describir_pesos(factores_usados),
+        "factors": {
+            nombre: {
+                "weight_pct": peso,
+                "what_it_measures": GLOSA_FACTORES.get(nombre, ""),
+                "metrics": [
+                    {
+                        "name": m.clave,
+                        "better_when": "higher" if m.mayor_es_mejor else "lower",
+                    }
+                    for m in FACTORES[nombre]
+                ],
+            }
+            for nombre, peso in sorted(factores_usados.items(), key=lambda kv: -kv[1])
+        },
+        "missing_data": (
+            "A metric a company does not report scores nothing — never zero. Scoring a gap as the "
+            "worst possible value punishes a company for a data provider's omission, and that is the "
+            "kind of error that never appears in the table and decides the order anyway. A factor is "
+            "averaged over the metrics that exist, and the weights are renormalised over the factors "
+            "that exist."
+        ),
+        "coverage": (
+            "Because weights renormalise, a company with thin data scores as confidently as a complete "
+            "one. cobertura_pct is published alongside every score for exactly that reason: 90 on 40% "
+            "coverage is an opinion about very little."
+        ),
+        "what_the_score_is_not": (
+            "The score is a position within this index, not a grade and not a valuation. A company's "
+            "score moves when other companies move. It says nothing about whether the name is worth "
+            "owning, and it is not a recommendation."
+        ),
+        "read_the_breakdown": (
+            "The per-factor scores matter more than the total. 'Cheap and high quality but no momentum' "
+            "is a statement you can argue with; a composite of 67 is not."
+        ),
+    }

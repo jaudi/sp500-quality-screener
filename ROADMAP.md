@@ -84,10 +84,24 @@ que no se puede analizar, no lo que puntúa bajo.
 
 ## Prioridad 1 — el motor multifactor
 
-- [ ] **Reescribir el cribado a dos pasadas.** Hoy el bucle descarta sobre la
-      marcha, así que no puede rankear: hay que recoger todo el universo primero
-      y puntuar después. Es el cambio estructural del que dependen los demás.
-      *Dificultad: media-alta. Reescribe `filtrar_acciones_*`.*
+- [x] **Pasada de recogida** (`recolectar_universo` en `common.py`). Recoge las
+      métricas de todo el universo sin descartar por puntuación. Medido: ~1 s por
+      ticker incluida la llamada a las cuentas anuales, así que el S&P 500 entero
+      son ~8 min de Actions — gratis en repo público, y sin coste de API porque
+      yfinance no cobra. Incluye beneficio normalizado, devengos de Sloan,
+      cobertura de intereses, deuda neta/EBITDA, margen operativo y P/B.
+- [ ] **Enchufar las dos pasadas al runner.** `recolectar_universo` +
+      `puntuar_factores` existen pero nadie los llama todavía; los tres screeners
+      siguen usando `filtrar_acciones_*`. Falta el `run_pipeline_multifactor`
+      con las dos etapas de puntuación (ver abajo). *Dificultad: media.*
+- [ ] **Puntuación en dos etapas.** `expectativas` sale del DCF inverso, que usa
+      SEC EDGAR y no puede correr sobre 500 nombres. El diseño es: rankear el
+      universo con los 4 factores baratos → lista corta de ~25 → DCF sobre esos →
+      score final con los 5. *Dificultad: baja una vez enchufado el runner.*
+- [ ] **Usar `beneficio_en_pico`.** Ya se calcula y no se usa. NEM sigue saliendo
+      primera en la prueba pese a que su P/E normalizado es 72x, porque calidad y
+      momentum la sostienen. Decidir si el pico es penalización dentro de value o
+      una marca visible en la tabla. *Dificultad: baja, decisión de criterio.*
 - [x] **Motor de factores** (`factores.py` + `test_factores.py`). Rango
       percentil por métrica, media por factor, combinación ponderada. Aritmética
       pura: se prueba entero sin red y sin tokens, como `valuation.py`. Los pesos

@@ -28,6 +28,7 @@ import yfinance as yf
 import anthropic
 from ddgs import DDGS
 
+import factores
 import valuation
 from valuation import analizar_valoraciones
 
@@ -489,6 +490,249 @@ def filtrar_acciones_crecimiento(
         print("Ninguna empresa cumplió los criterios en la muestra analizada.")
 
     return ganadores, fallidos
+
+
+# ==============================================================================
+# PASADA DE RECOGIDA — el universo entero, sin descartar por puntuación
+# ==============================================================================
+# El cribado clásico (filtrar_acciones_*) descarta sobre la marcha, así que
+# cuando termina no queda universo que rankear: por eso el motor multifactor
+# necesita esta segunda forma de recorrer los tickers. Aquí no se elimina a nadie
+# por puntuar bajo — sólo por no poder evaluarse.
+#
+# El coste es real: `info` y el histórico de precios son dos llamadas por ticker,
+# y las cuentas anuales una tercera. Sobre el S&P 500 eso es tiempo, no dinero,
+# porque ninguna de las tres pasa por Claude.
+
+SESIONES_MINIMAS_PARA_MA200 = 200
+
+
+def _fila_cuentas(cuentas, *nombres):
+    """Primer valor disponible de las filas que se le pasen, en orden.
+
+    yfinance renombra filas entre versiones y entre sectores ('EBIT' aparece a
+    veces sólo como 'Operating Income'), así que cada métrica pide varios
+    nombres y se queda con el primero que exista.
+    """
+    if cuentas is None or cuentas.empty:
+        return None
+    for nombre in nombres:
+        if nombre in cuentas.index:
+            serie = cuentas.loc[nombre].dropna()
+            if len(serie):
+                return serie
+    return None
+
+
+def _metricas_de_cuentas(ticker_obj) -> dict:
+    """Métricas que exigen la cuenta de resultados: normalizadas y cobertura.
+
+    Son las que no se pueden sacar de `info`, y la razón por la que existe esta
+    llamada extra. El beneficio normalizado es el concepto central: una media de
+    varios años en vez del último dato interanual, que es lo que impide que una
+    empresa saliendo de un suelo cíclico aparezca como la más barata de la tabla.
+    """
+    vacio = {
+        "beneficio_normalizado": None,
+        "crecimiento_beneficios_normalizado": None,
+        "crecimiento_ingresos_normalizado": None,
+        "cobertura_intereses": None,
+        "margen_operativo": None,
+        "beneficio_en_pico": None,
+        "activos_totales": None,
+        "anios_de_cuentas": 0,
+    }
+
+    try:
+        cuentas = ticker_obj.financials
+    except Exception:
+        return vacio
+    if cuentas is None or cuentas.empty:
+        return vacio
+
+    # `totalAssets` no existe en `info` — sólo vive en el balance. Sin esto los
+    # devengos salían None en el 100% de los tickers, y un factor que nunca
+    # puntúa no se nota en la tabla: simplemente deja de pesar sin avisar.
+    activos = None
+    try:
+        balance = ticker_obj.balance_sheet
+        fila_activos = _fila_cuentas(balance, "Total Assets")
+        if fila_activos is not None:
+            activos = float(fila_activos.iloc[0])
+    except Exception:
+        pass
+
+    beneficio = _fila_cuentas(
+        cuentas,
+        "Net Income From Continuing Operation Net Minority Interest",
+        "Net Income Common Stockholders",
+        "Net Income",
+    )
+    ingresos = _fila_cuentas(cuentas, "Total Revenue", "Operating Revenue")
+    ebit = _fila_cuentas(cuentas, "EBIT", "Operating Income")
+    intereses = _fila_cuentas(cuentas, "Interest Expense")
+
+    salida = dict(vacio)
+    salida["activos_totales"] = activos
+    if beneficio is None or len(beneficio) < 2:
+        return salida
+
+    valores = [float(v) for v in beneficio]
+    salida["anios_de_cuentas"] = len(valores)
+    salida["beneficio_normalizado"] = round(sum(valores) / len(valores), 2)
+
+    # El último año contra la media de los anteriores. Es la comparación que
+    # distingue crecimiento de rebote: contra el año pasado, un suelo cíclico
+    # produce cifras de tres dígitos que no dicen nada del negocio.
+    if len(valores) >= 3:
+        base = sum(valores[1:]) / len(valores[1:])
+        if base > 0:
+            salida["crecimiento_beneficios_normalizado"] = round((valores[0] / base - 1) * 100, 2)
+        # Beneficio actual en máximo del periodo: en una cíclica eso es señal de
+        # venta, no de compra, y un múltiplo bajo ahí es una trampa.
+        salida["beneficio_en_pico"] = bool(valores[0] >= max(valores))
+
+    if ingresos is not None and len(ingresos) >= 3:
+        vi = [float(v) for v in ingresos]
+        base = sum(vi[1:]) / len(vi[1:])
+        if base > 0:
+            salida["crecimiento_ingresos_normalizado"] = round((vi[0] / base - 1) * 100, 2)
+
+    if ebit is not None and len(ebit):
+        if ingresos is not None and len(ingresos) and float(ingresos.iloc[0]) > 0:
+            salida["margen_operativo"] = round(float(ebit.iloc[0]) / float(ingresos.iloc[0]) * 100, 2)
+        if intereses is not None and len(intereses):
+            gasto = abs(float(intereses.iloc[0]))
+            # Sin deuda que pagar la cobertura es infinita, no cero. Se tapa en
+            # un valor alto en vez de dejarlo a None: no tener intereses que
+            # cubrir es la mejor situación posible, y un None la sacaría del
+            # ranking en vez de ponerla arriba.
+            salida["cobertura_intereses"] = round(float(ebit.iloc[0]) / gasto, 2) if gasto > 0 else 99.0
+
+    return salida
+
+
+def recolectar_universo(
+    tickers: list,
+    limite_analisis: int = 500,
+    pausa_entre_tickers: float = 0.4,
+    verbose_errores: bool = True,
+    con_cuentas: bool = True,
+) -> tuple[list, list]:
+    """Recoge las métricas de TODOS los tickers evaluables. No puntúa ni descarta.
+
+    Devuelve (universo, fallidos). Un ticker llega al universo aunque le falten
+    métricas: el motor de factores sabe convivir con huecos y publica la
+    cobertura. Sólo se queda fuera lo que no se puede evaluar en absoluto — sin
+    precio, sin histórico suficiente, o con la API caída tras los reintentos.
+
+    `con_cuentas=False` salta la cuenta de resultados y con ella el beneficio
+    normalizado, la cobertura de intereses y el margen operativo. Existe para
+    poder iterar rápido en local, no para producción: sin normalizar, el factor
+    de valor vuelve a premiar a las cíclicas en pico.
+    """
+    muestra = tickers[:limite_analisis]
+    print(f"\n📊 Recogiendo métricas de {len(muestra)} tickers (sin descartar por puntuación)...")
+
+    universo = []
+    fallidos = []
+    sin_tecnicos = 0
+
+    for i, t in enumerate(muestra, start=1):
+        try:
+            info = obtener_info_con_reintentos(t)
+
+            tecnicos = calcular_indicadores_tecnicos(t, con_tendencia_larga=True)
+            if tecnicos is None:
+                # Sin 200 sesiones no hay estructura de tendencia ni retornos, y
+                # media cartera de métricas de momentum a None desvirtúa el
+                # ranking más que excluir la empresa.
+                sin_tecnicos += 1
+                continue
+
+            per = info.get("trailingPE") or info.get("forwardPE")
+            capitalizacion = info.get("marketCap")
+            fcf = info.get("freeCashflow")
+            beneficio = info.get("netIncomeToCommon")
+            flujo_operativo = info.get("operatingCashflow")
+            deuda = info.get("totalDebt")
+            caja = info.get("totalCash")
+            ebitda = info.get("ebitda")
+
+            fila = {
+                "ticker": t,
+                "nombre": NOMBRES_CORREGIDOS.get(t, info.get("shortName", t)),
+                "sector": info.get("sector", "N/A"),
+                # ── crudos, para la tabla ──
+                "per": round(per, 2) if per else None,
+                "roe": round(info.get("returnOnEquity") * 100, 2) if info.get("returnOnEquity") is not None else None,
+                "roa": round(info.get("returnOnAssets") * 100, 2) if info.get("returnOnAssets") is not None else None,
+                "deuda_patrimonio": round(info.get("debtToEquity"), 1) if info.get("debtToEquity") is not None else None,
+                "rsi": tecnicos["rsi"],
+                "precio_actual": tecnicos["precio_actual"],
+                "ma50": tecnicos["ma50"],
+                "ma200": tecnicos["ma200"],
+                # ── factor value ──
+                "precio_valor_libros": round(info.get("priceToBook"), 2) if info.get("priceToBook") is not None else None,
+                "fcf_yield": round(fcf / capitalizacion * 100, 2) if fcf and capitalizacion else None,
+                # ── factor quality ──
+                "conversion_fcf": round(fcf / beneficio, 2) if fcf and beneficio and beneficio > 0 else None,
+                # Devengos de Sloan: cuánto del beneficio no llegó a ser caja.
+                # Alto es malo — el beneficio se apoya en criterio contable más
+                # que en cobros.
+                # Se rellena abajo: el denominador son los activos totales, que
+                # sólo están en el balance.
+                "devengos": None,
+                "deuda_neta_ebitda": (
+                    round((deuda - (caja or 0)) / ebitda, 2)
+                    if deuda is not None and ebitda and ebitda > 0 else None
+                ),
+                # ── factor momentum ──
+                "retorno_6m": tecnicos["retorno_6m"],
+                "retorno_12m": tecnicos["retorno_12m"],
+                "distancia_ma200_pct": round(
+                    (tecnicos["precio_actual"] / tecnicos["ma200"] - 1) * 100, 2
+                ) if tecnicos["ma200"] else None,
+                # ── se rellena en la segunda etapa, tras el DCF inverso ──
+                "exceso_implicito_pp": None,
+            }
+
+            if con_cuentas:
+                fila.update(_metricas_de_cuentas(yf.Ticker(t)))
+                # Devengos de Sloan: la parte del beneficio que no llegó a ser
+                # caja, escalada por activos. Alto es malo — el beneficio se
+                # apoya en criterio contable más que en cobros.
+                activos = fila.get("activos_totales")
+                if beneficio is not None and flujo_operativo is not None and activos:
+                    fila["devengos"] = round((beneficio - flujo_operativo) / activos, 4)
+                # El P/E normalizado es el múltiplo sobre el beneficio medio, no
+                # sobre el del último año. Es el arreglo de raíz del problema
+                # cíclico: contra la media, una minera en pico deja de parecer
+                # barata.
+                bn = fila.get("beneficio_normalizado")
+                fila["per_normalizado"] = (
+                    round(capitalizacion / bn, 2) if capitalizacion and bn and bn > 0 else None
+                )
+            else:
+                fila["per_normalizado"] = fila["per"]
+
+            universo.append(fila)
+
+        except Exception as e:
+            fallidos.append({"ticker": t, "error": f"{type(e).__name__}: {e}"})
+            if verbose_errores:
+                print(f"⚠️  [{i}/{len(muestra)}] {t}: {type(e).__name__}: {e}")
+            continue
+        finally:
+            time.sleep(pausa_entre_tickers)
+
+        if i % 25 == 0:
+            print(f"   ...{i}/{len(muestra)} — {len(universo)} recogidos, {len(fallidos)} fallidos")
+
+    print(f"\n   Universo recogido:  {len(universo)}")
+    print(f"   Sin histórico:      {sin_tecnicos}")
+    print(f"   Fallidos de API:    {len(fallidos)}")
+    return universo, fallidos
 
 
 # ==============================================================================
