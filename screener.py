@@ -12,7 +12,7 @@ import io
 import pandas as pd
 import requests
 
-from common import run_pipeline
+from common import run_pipeline_multifactor
 
 
 def obtener_tickers_sp500() -> list:
@@ -33,12 +33,12 @@ def obtener_tickers_sp500() -> list:
 
 
 def main():
-    run_pipeline(
+    run_pipeline_multifactor(
         obtener_tickers_fn=obtener_tickers_sp500,
         output_filename="latest-report.json",
         universo_nombre="the S&P 500",
-        limite_analisis_default=500,
-        roa_minimo=0.12,  # explícito: el S&P 500 sí exige ROA como filtro duro
+        clave_pesos="sp500",
+        limite_analisis_default=510,
     )
 
 

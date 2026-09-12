@@ -18,7 +18,7 @@ import io
 import pandas as pd
 import requests
 
-from common import run_pipeline_crecimiento
+from common import run_pipeline_multifactor
 
 SLICKCHARTS_URL = "https://www.slickcharts.com/nasdaq100"
 
@@ -104,12 +104,13 @@ def obtener_tickers_nasdaq100() -> tuple[list, str]:
 
 
 def main():
-    run_pipeline_crecimiento(
+    run_pipeline_multifactor(
         obtener_tickers_fn=obtener_tickers_nasdaq100,
         output_filename="latest-report-nasdaq100.json",
         universo_nombre="the Nasdaq-100",
+        clave_pesos="nasdaq100",
         # Por encima de los ~102 constituyentes, para que un alta en el índice no
-        # quede fuera del análisis por el límite en vez de por los filtros.
+        # quede fuera del análisis por el límite en vez de por el ranking.
         limite_analisis_default=110,
     )
 

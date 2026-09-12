@@ -13,7 +13,7 @@ import io
 import pandas as pd
 import requests
 
-from common import run_pipeline
+from common import run_pipeline_multifactor
 
 
 def obtener_tickers_ibex35() -> list:
@@ -36,15 +36,16 @@ def obtener_tickers_ibex35() -> list:
 
 
 def main():
-    run_pipeline(
+    run_pipeline_multifactor(
         obtener_tickers_fn=obtener_tickers_ibex35,
         output_filename="latest-report-ibex35.json",
         universo_nombre="the IBEX 35",
-        limite_analisis_default=35,
-        # ROA no es un filtro duro aquí: el IBEX 35 está muy cargado de bancos
-        # y utilities, sectores donde un ROA bajo es estructural del negocio,
-        # no una señal real de mala calidad (ver common.filtrar_acciones_calidad).
-        roa_minimo=None,
+        clave_pesos="ibex35",
+        limite_analisis_default=40,
+        # Con 35 valores la lista corta no puede ser de 25: se valoraría el
+        # índice entero y el informe dejaría de discriminar.
+        top_n_valoracion=12,
+        top_n_informe=6,
     )
 
 

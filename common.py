@@ -1496,5 +1496,46 @@ def run_pipeline_multifactor(
         "valuation_failed": valoraciones_fallidas,
         "valuation_report": valuation_report,
     }
+    _escribir_json(output_filename, output)
 
-    return _escribir_json(output_filename, output)
+    # El universo entero, aparte: es lo que alimenta el screener interactivo del
+    # portal, donde el usuario pone sus propios filtros. Va en su propio fichero
+    # y no dentro del informe porque son dos consumos distintos — el informe lo
+    # lee una página que quiere diez nombres comentados, y esto lo lee un
+    # navegador que quiere quinientas filas para cribar en local.
+    #
+    # Aquí no descarta nada. Ese es el punto: un filtro duro decide por el lector
+    # antes de que el lector vea nada, y si el cribado lo hace el usuario en
+    # pantalla, la única función del backend es enseñarle todo lo que hay.
+    return _escribir_universo(universo, clave_pesos, universo_fuente, metodologia)
+
+
+# Campos que viajan al navegador. Se enumeran a mano en vez de volcar la fila
+# entera: la recogida guarda intermedios (ebit, activos_totales) que no se
+# muestran y que multiplicarían el peso del JSON sin que nadie los mire.
+CAMPOS_UNIVERSO = (
+    "ticker", "nombre", "sector", "score", "cobertura_pct", "factores",
+    "per", "per_normalizado", "precio_valor_libros", "fcf_yield", "ev_ebit",
+    "roic", "roe", "roa", "margen_operativo", "conversion_fcf", "devengos",
+    "deuda_patrimonio", "deuda_neta_ebitda", "cobertura_intereses",
+    "crecimiento_ingresos_normalizado", "crecimiento_beneficios_normalizado",
+    "beneficio_en_pico", "rsi", "precio_actual", "ma50", "ma200",
+    "retorno_6m", "retorno_12m", "distancia_ma200_pct", "exceso_implicito_pp",
+)
+
+
+def _escribir_universo(universo: list, clave: str, fuente: str | None, metodologia: dict) -> str:
+    """Escribe data/universe-<clave>.json con todas las empresas recogidas."""
+    filas = [{c: e.get(c) for c in CAMPOS_UNIVERSO} for e in universo]
+    salida = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "screen": clave,
+        "universe_source": fuente,
+        "count": len(filas),
+        "methodology": metodologia,
+        "companies": filas,
+    }
+    ruta = _escribir_json(f"universe-{clave}.json", salida)
+    kb = os.path.getsize(ruta) / 1024
+    print(f"   {len(filas)} empresas · {kb:.0f} KB")
+    return ruta
