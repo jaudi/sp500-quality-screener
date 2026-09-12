@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-12T20:24:32.186792+00:00",
+  "generated_at": "2026-09-12T20:34:49.795794+00:00",
   "screen": "ibex35",
-  "universe_source": "Wikipedia",
+  "universe_source": null,
   "count": 35,
   "methodology": {
     "approach": "Factor scoring, not threshold filtering. Every company in the index is ranked against every other on each metric, and the ranks are combined with the weights below. Nothing is rejected for scoring poorly — only for being impossible to evaluate.",
@@ -114,20 +114,23 @@
     "missing_data": "A metric a company does not report scores nothing — never zero. Scoring a gap as the worst possible value punishes a company for a data provider's omission, and that is the kind of error that never appears in the table and decides the order anyway. A factor is averaged over the metrics that exist, and the weights are renormalised over the factors that exist.",
     "coverage": "Because weights renormalise, a company with thin data scores as confidently as a complete one. cobertura_pct is published alongside every score for exactly that reason: 90 on 40% coverage is an opinion about very little.",
     "what_the_score_is_not": "The score is a position within this index, not a grade and not a valuation. A company's score moves when other companies move. It says nothing about whether the name is worth owning, and it is not a recommendation.",
-    "read_the_breakdown": "The per-factor scores matter more than the total. 'Cheap and high quality but no momentum' is a statement you can argue with; a composite of 67 is not."
+    "read_the_breakdown": "The per-factor scores matter more than the total. 'Cheap and high quality but no momentum' is a statement you can argue with; a composite of 67 is not.",
+    "two_stage": "Four factors are ranked across the whole index (35 companies). The fifth, expectativas, comes from a reverse DCF that reads SEC filings and cannot run at that scale, so the top 12 are valued and ranked on it among themselves. The other four keep their index-wide percentile — re-ranking them inside an already-selected group would measure something different and read as if it did not.",
+    "report_size": "The 6 highest-scoring companies go into the written report. That number is chosen rather than whatever a threshold happened to admit, which is what makes the cost of the run predictable."
   },
   "companies": [
     {
       "ticker": "IAG.MC",
       "nombre": "International Consolidated Airlines Group, S.A.",
       "sector": "Industrials",
-      "score": 68.3,
+      "score": 69.3,
       "cobertura_pct": 94,
       "factores": {
         "value": 74.1,
         "quality": 65.2,
         "growth": 83.1,
-        "momentum": 50.0
+        "momentum": 50.0,
+        "expectativas": 75.0
       },
       "per": 7.63,
       "per_normalizado": 9.32,
@@ -153,7 +156,7 @@
       "retorno_6m": 20.61,
       "retorno_12m": 13.48,
       "distancia_ma200_pct": 2.52,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -63.0
     },
     {
       "ticker": "LOG.MC",
@@ -197,13 +200,14 @@
       "ticker": "AMS.MC",
       "nombre": "AMADEUS IT GROUP, S.A.",
       "sector": "Technology",
-      "score": 60.3,
+      "score": 55.0,
       "cobertura_pct": 94,
       "factores": {
         "value": 51.9,
         "quality": 82.8,
         "growth": 72.1,
-        "momentum": 34.3
+        "momentum": 34.3,
+        "expectativas": 25.0
       },
       "per": 17.88,
       "per_normalizado": 20.82,
@@ -229,19 +233,20 @@
       "retorno_6m": 7.53,
       "retorno_12m": -17.35,
       "distancia_ma200_pct": 1.56,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -21.1
     },
     {
       "ticker": "PUIG.MC",
       "nombre": "PUIG BRANDS, S.A. CLASE B",
       "sector": "Consumer Defensive",
-      "score": 59.0,
+      "score": 57.7,
       "cobertura_pct": 94,
       "factores": {
         "value": 57.6,
         "quality": 62.1,
         "growth": 62.7,
-        "momentum": 54.9
+        "momentum": 54.9,
+        "expectativas": 50.0
       },
       "per": 16.84,
       "per_normalizado": 19.65,
@@ -267,19 +272,20 @@
       "retorno_6m": 11.41,
       "retorno_12m": 23.63,
       "distancia_ma200_pct": 6.97,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -42.5
     },
     {
       "ticker": "MAP.MC",
       "nombre": "MAPFRE, S.A.",
       "sector": "Financial Services",
-      "score": 58.4,
+      "score": 64.7,
       "cobertura_pct": 94,
       "factores": {
         "value": 63.6,
         "quality": 48.4,
         "growth": 63.3,
-        "momentum": 59.8
+        "momentum": 59.8,
+        "expectativas": 100.0
       },
       "per": 11.34,
       "per_normalizado": 16.25,
@@ -305,7 +311,7 @@
       "retorno_6m": 23.4,
       "retorno_12m": 21.57,
       "distancia_ma200_pct": 8.6,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": -63.8
     },
     {
       "ticker": "BBVA.MC",
@@ -349,13 +355,14 @@
       "ticker": "REP.MC",
       "nombre": "REPSOL,  S.A.",
       "sector": "Energy",
-      "score": 57.4,
+      "score": 48.8,
       "cobertura_pct": 94,
       "factores": {
         "value": 66.9,
         "quality": 44.3,
         "growth": 9.2,
-        "momentum": 89.2
+        "momentum": 89.2,
+        "expectativas": 0.0
       },
       "per": 9.39,
       "per_normalizado": 11.17,
@@ -381,7 +388,7 @@
       "retorno_6m": 22.58,
       "retorno_12m": 107.45,
       "distancia_ma200_pct": 37.91,
-      "exceso_implicito_pp": null
+      "exceso_implicito_pp": 23.0
     },
     {
       "ticker": "NTGY.MC",
@@ -1001,7 +1008,7 @@
         "value": 51.7,
         "quality": 12.5,
         "growth": 46.9,
-        "momentum": 82.4
+        "momentum": 82.3
       },
       "per": 15.89,
       "per_normalizado": 18.9,
