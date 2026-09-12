@@ -1,0 +1,208 @@
+{
+  "generated_at": "2026-09-12T15:23:54.868725+00:00",
+  "method": {
+    "entry": "First time the screener selected the name. The price recorded in that run's report is the entry price, and the commit date is the entry date.",
+    "holding": "Buy and hold from that first signal, equally weighted, never sold. The screeners have no sell rule, so one had to be chosen to make measurement possible — this is the simplest and the hardest to tune after the fact. `still_passing` shows which names would already have left a filter-based rule.",
+    "benchmark": "The index over the same window, from the earliest entry date. The portfolio return on its own says nothing: -3% is excellent against an index that fell 10% and poor against one that rose 6%. Alpha is the result.",
+    "costs": "No transaction costs, spreads, taxes or dividends. Gross price return only.",
+    "caveat": "Read weeks_of_history and n_positions before reading anything else. Over a few weeks and a handful of names this is noise, not evidence."
+  },
+  "screeners": {
+    "sp500": {
+      "name": "S&P 500",
+      "benchmark": "^GSPC",
+      "since": "2026-08-28",
+      "weeks_of_history": 2.1,
+      "n_positions": 6,
+      "portfolio_return_pct": -3.68,
+      "benchmark_return_pct": -0.71,
+      "alpha_pp": -2.97,
+      "positions": [
+        {
+          "ticker": "ADBE",
+          "entry_date": "2026-08-28",
+          "entry_price": 291.92,
+          "current_price": 252.23,
+          "return_pct": -13.6,
+          "still_passing": true
+        },
+        {
+          "ticker": "CF",
+          "entry_date": "2026-08-28",
+          "entry_price": 125.3,
+          "current_price": 133.07,
+          "return_pct": 6.2,
+          "still_passing": true
+        },
+        {
+          "ticker": "INCY",
+          "entry_date": "2026-08-28",
+          "entry_price": 123.57,
+          "current_price": 121.47,
+          "return_pct": -1.7,
+          "still_passing": true
+        },
+        {
+          "ticker": "LULU",
+          "entry_date": "2026-08-28",
+          "entry_price": 120.49,
+          "current_price": 98.97,
+          "return_pct": -17.86,
+          "still_passing": false
+        },
+        {
+          "ticker": "NEM",
+          "entry_date": "2026-08-28",
+          "entry_price": 128.04,
+          "current_price": 126.81,
+          "return_pct": -0.96,
+          "still_passing": true
+        },
+        {
+          "ticker": "ULTA",
+          "entry_date": "2026-08-28",
+          "entry_price": 516.54,
+          "current_price": 546.78,
+          "return_pct": 5.85,
+          "still_passing": true
+        }
+      ]
+    },
+    "ibex35": {
+      "name": "IBEX 35",
+      "benchmark": "^IBEX",
+      "since": "2026-08-28",
+      "weeks_of_history": 2.1,
+      "n_positions": 3,
+      "portfolio_return_pct": -4.91,
+      "benchmark_return_pct": -1.01,
+      "alpha_pp": -3.9,
+      "positions": [
+        {
+          "ticker": "AMS.MC",
+          "entry_date": "2026-08-28",
+          "entry_price": 58.14,
+          "current_price": 54.18,
+          "return_pct": -6.81,
+          "still_passing": true
+        },
+        {
+          "ticker": "LOG.MC",
+          "entry_date": "2026-08-28",
+          "entry_price": 35.9,
+          "current_price": 35.12,
+          "return_pct": -2.17,
+          "still_passing": true
+        },
+        {
+          "ticker": "ROVI.MC",
+          "entry_date": "2026-08-28",
+          "entry_price": 60.85,
+          "current_price": 57.35,
+          "return_pct": -5.75,
+          "still_passing": true
+        }
+      ]
+    },
+    "nasdaq100": {
+      "name": "Nasdaq-100",
+      "benchmark": "^NDX",
+      "since": "2026-09-12",
+      "weeks_of_history": 0.0,
+      "n_positions": 11,
+      "portfolio_return_pct": 0.0,
+      "benchmark_return_pct": null,
+      "alpha_pp": null,
+      "positions": [
+        {
+          "ticker": "AAPL",
+          "entry_date": "2026-09-12",
+          "entry_price": 332.27,
+          "current_price": 332.27,
+          "return_pct": -0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "ADI",
+          "entry_date": "2026-09-12",
+          "entry_price": 378.78,
+          "current_price": 378.78,
+          "return_pct": -0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "AMD",
+          "entry_date": "2026-09-12",
+          "entry_price": 516.13,
+          "current_price": 516.13,
+          "return_pct": 0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "AMZN",
+          "entry_date": "2026-09-12",
+          "entry_price": 256.78,
+          "current_price": 256.78,
+          "return_pct": -0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "FANG",
+          "entry_date": "2026-09-12",
+          "entry_price": 204.97,
+          "current_price": 204.97,
+          "return_pct": 0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "MRVL",
+          "entry_date": "2026-09-12",
+          "entry_price": 236.1,
+          "current_price": 236.1,
+          "return_pct": 0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "MSFT",
+          "entry_date": "2026-09-12",
+          "entry_price": 495.63,
+          "current_price": 495.63,
+          "return_pct": 0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "MU",
+          "entry_date": "2026-09-12",
+          "entry_price": 975.26,
+          "current_price": 975.26,
+          "return_pct": 0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "NVDA",
+          "entry_date": "2026-09-12",
+          "entry_price": 218.29,
+          "current_price": 218.29,
+          "return_pct": -0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "PLTR",
+          "entry_date": "2026-09-12",
+          "entry_price": 167.23,
+          "current_price": 167.23,
+          "return_pct": -0.0,
+          "still_passing": true
+        },
+        {
+          "ticker": "TER",
+          "entry_date": "2026-09-12",
+          "entry_price": 379.72,
+          "current_price": 379.72,
+          "return_pct": 0.0,
+          "still_passing": true
+        }
+      ]
+    }
+  }
+}

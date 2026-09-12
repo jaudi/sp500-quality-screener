@@ -1,0 +1,49 @@
+name: Screener Performance
+
+on:
+  # Jueves, después de que hayan corrido los tres screeners (lun/mar/mié).
+  schedule:
+    - cron: "0 7 * * 4"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # El medidor reconstruye los precios de entrada desde el historial de
+          # git. Con la profundidad 1 por defecto no encuentra historial y no
+          # falla: devuelve una entrada por ticker fechada hoy y un 0% perfecto,
+          # que parece un resultado. medir.py aborta si detecta un clon
+          # superficial, pero el arreglo es este.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # No necesita ANTHROPIC_API_KEY: aquí no hay ningún agente, solo
+      # aritmética sobre precios. Es el único workflow del repo que no gasta
+      # tokens, y por eso puede correr aunque la clave caduque.
+      - name: Measure forward performance
+        run: python medir.py
+
+      - name: Commit performance report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/performance.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: weekly screener performance measurement"
+            git pull --rebase origin main
+            git push
+          fi
