@@ -1491,6 +1491,17 @@ def run_pipeline_multifactor(
     for i, empresa in enumerate(lista_corta):
         if percentiles_exp[i] is not None:
             empresa["factores"]["expectativas"] = round(percentiles_exp[i], 1)
+        elif empresa["ticker"] in por_ticker:
+            # Se valoró y la tendencia no pasó el test de R²: `gap_pp` viene a
+            # None porque restar de un ajuste descartado da aritmética, no
+            # señal. Pero dejar el factor fuera reparte su peso entre los demás
+            # y premia a la empresa por ser impredecible — Newmont subía al
+            # segundo puesto del S&P en parte porque el único factor que mide si
+            # está cara no se le aplicaba. Penalizar sin fingir que se ha medido.
+            empresa["factores"]["expectativas"] = factores.PERCENTIL_SIN_TENDENCIA
+            empresa["expectativas_sin_tendencia"] = True
+        # Sin valoración en absoluto (error de API, sin filings) el factor sigue
+        # ausente: eso sí es un hueco, no un hallazgo.
         puntuaciones = empresa["factores"]
         peso_total = sum(pesos[f] for f in puntuaciones if f in pesos)
         if peso_total > 0:

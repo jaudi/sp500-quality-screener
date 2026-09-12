@@ -102,6 +102,19 @@ PESOS: dict[str, dict[str, float]] = {
 }
 
 
+# Percentil que recibe una empresa a la que SÍ se valoró y cuyos flujos no
+# pasaron el test de tendencia. No es una medición: es una penalización, y por
+# eso es un número redondo y discutible en vez de un cálculo con aspecto de
+# precisión. Está en el cuartil bajo porque un negocio cuyos flujos no tienen
+# dirección es menos analizable, no necesariamente peor que el peor medido.
+#
+# La distinción que justifica todo esto: un dato que yfinance no reporta es un
+# hueco del proveedor y no debe penalizar. Un R² bajo no es un hueco — es el
+# resultado de haber mirado. Tratarlos igual hacía que suspender costase y no
+# presentarse saliera gratis.
+PERCENTIL_SIN_TENDENCIA = 25.0
+
+
 def rango_percentil(valores: list, mayor_es_mejor: bool = True) -> list:
     """Rango percentil 0-100 de cada valor dentro de la lista.
 
@@ -288,6 +301,14 @@ def describir_metodologia(pesos: dict) -> dict:
             "Because weights renormalise, a company with thin data scores as confidently as a complete "
             "one. cobertura_pct is published alongside every score for exactly that reason: 90 on 40% "
             "coverage is an opinion about very little."
+        ),
+        "no_trend_penalty": (
+            f"The expectations factor needs a trend to compare today's price against. Where a company "
+            f"was valued but its cash flows failed the trend test, it scores {PERCENTIL_SIN_TENDENCIA:.0f} "
+            f"rather than being left out. Leaving it out would renormalise the remaining weights and hand "
+            f"an unanalysable business a better score than one that was measured and came out badly — "
+            f"failing the test would be free while scoring poorly was not. A company that could not be "
+            f"valued at all still scores nothing here, because that is a gap rather than a finding."
         ),
         "what_the_score_is_not": (
             "The score is a position within this index, not a grade and not a valuation. A company's "
