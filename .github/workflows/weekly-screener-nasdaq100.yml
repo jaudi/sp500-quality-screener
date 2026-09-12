@@ -2,8 +2,17 @@ name: Weekly Nasdaq-100 Growth Screener
 
 on:
   schedule:
-    - cron: "0 6 * * 3" # Every Wednesday 06:00 UTC (S&P Monday, IBEX Tuesday)
-  workflow_dispatch: {}
+    # Semanal: datos, ranking y universo. Sin Claude, coste cero.
+    - cron: "0 6 * * 3"
+    # Mensual: lo mismo más el informe escrito. Es la unica ejecucion
+    # que gasta tokens, y la unica que necesita la clave.
+    - cron: "0 7 3 * *"
+  workflow_dispatch:
+    inputs:
+      con_informe:
+        description: "Generar tambien el informe escrito (gasta tokens)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -25,6 +34,7 @@ jobs:
         run: python screener_nasdaq100.py
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GENERAR_INFORME: ${{ (github.event.schedule == '0 7 3 * *' || github.event.inputs.con_informe == 'true') && '1' || '' }}
 
       - name: Commit updated report
         run: |

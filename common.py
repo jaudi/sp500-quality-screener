@@ -1119,6 +1119,7 @@ def _etapa_valoracion(
     empresas_seleccionadas: list,
     universo_nombre: str,
     pausa_entre_tickers: float,
+    con_comentario: bool = True,
 ) -> tuple[list, list, str | None]:
     """Etapa de valoración (DCF inverso) sobre las empresas que pasaron el cribado.
 
@@ -1135,7 +1136,10 @@ def _etapa_valoracion(
             pausa_entre_tickers=pausa_entre_tickers,
         )
         valuation_report = None
-        if valoraciones:
+        # El DCF inverso es aritmética y yfinance: gratis. El comentario que lo
+        # acompaña es una llamada a Claude, y por eso se puede apagar por
+        # separado — los números de la tabla salen igual.
+        if valoraciones and con_comentario:
             valuation_report = generar_informe_valoracion(valoraciones, universo_nombre)
         return valoraciones, valoraciones_fallidas, valuation_report
     except Exception as e:
@@ -1168,6 +1172,33 @@ def _metodo_valoracion() -> dict:
             "Levered FCF is compared directly against market cap with no net-debt bridge — a deliberate simplification for data robustness across 500 tickers.",
         ],
     }
+
+
+def _informes_previos(output_filename: str) -> tuple[str | None, str | None, str | None]:
+    """Recupera los informes escritos por la última ejecución que sí los generó.
+
+    Existe porque las dos cadencias comparten fichero: los datos se refrescan
+    cada semana y la narrativa una vez al mes. Sin esto, la primera ejecución
+    semanal sobrescribiría el JSON con report=None y el comentario del mes
+    duraría tres días — y nadie se enteraría, porque un texto que desaparece no
+    lanza ningún error.
+
+    Devuelve (report, valuation_report, fecha_en_que_se_escribieron).
+    """
+    ruta = os.path.join(DATA_DIR, output_filename)
+    try:
+        with open(ruta, encoding="utf-8") as f:
+            previo = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None, None, None
+
+    return (
+        previo.get("report"),
+        previo.get("valuation_report"),
+        # Si el informe previo no llevaba fecha propia, la de generación del
+        # fichero es lo más cercano que hay.
+        previo.get("report_generated_at") or previo.get("generated_at"),
+    )
 
 
 def _escribir_json(output_filename: str, output: dict) -> str:
@@ -1371,6 +1402,7 @@ def run_pipeline_multifactor(
     pausa_entre_tickers: float = 0.4,
     top_n_valoracion: int = 25,
     top_n_informe: int = 10,
+    con_informe: bool | None = None,
 ) -> str:
     """Cribado multifactor completo. Devuelve la ruta del JSON escrito.
 
@@ -1403,8 +1435,17 @@ def run_pipeline_multifactor(
     —seis nombres una semana, treinta otra— y la factura iba detrás. Con un
     ranking se elige.
     """
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise ValueError("⚠️ La variable de entorno ANTHROPIC_API_KEY no está definida.")
+    # Los dos informes de Claude son lo único facturado de toda la pipeline. El
+    # cribado, el ranking, los universos y el DCF inverso son aritmética y
+    # yfinance, así que una ejecución sin informe cuesta cero — y, al no necesitar
+    # la clave, sigue funcionando aunque haya caducado.
+    if con_informe is None:
+        con_informe = bool(os.environ.get("GENERAR_INFORME"))
+
+    if con_informe and not os.environ.get("ANTHROPIC_API_KEY"):
+        raise ValueError("⚠️ Se pidió informe pero ANTHROPIC_API_KEY no está definida.")
+    if not con_informe:
+        print("📉 Ejecución sin informe: datos y ranking sí, narrativa no. Coste: 0.")
 
     pesos = factores.PESOS[clave_pesos]
 
@@ -1432,7 +1473,7 @@ def run_pipeline_multifactor(
 
     # ── Valoración sólo sobre la lista corta ─────────────────────────────────
     valoraciones, valoraciones_fallidas, valuation_report = _etapa_valoracion(
-        lista_corta, universo_nombre, pausa_entre_tickers
+        lista_corta, universo_nombre, pausa_entre_tickers, con_comentario=con_informe
     )
 
     # `gap_pp` ya es (crecimiento implícito − tendencia real), y sólo existe
@@ -1462,9 +1503,14 @@ def run_pipeline_multifactor(
     print(f"🔎 Etapa 2: expectativas añadidas → {len(seleccionadas)} al informe")
 
     # ── Informe ──────────────────────────────────────────────────────────────
-    report_text = _informe_seguro(
-        lambda: generar_informe_multifactor(seleccionadas, universo_nombre, pesos)
-    )
+    report_text = None
+    report_fecha = None
+    if con_informe:
+        report_text = _informe_seguro(
+            lambda: generar_informe_multifactor(seleccionadas, universo_nombre, pesos)
+        )
+        if report_text:
+            report_fecha = datetime.now(timezone.utc).isoformat()
 
     metodologia = factores.describir_metodologia(pesos)
     metodologia["two_stage"] = (
@@ -1480,6 +1526,15 @@ def run_pipeline_multifactor(
         f"the run predictable."
     )
 
+    # Sin informe nuevo se arrastra el anterior en vez de dejar el hueco: los
+    # datos de la tabla son de hoy y el comentario es del mes pasado, y
+    # report_generated_at es lo que permite a la página decirlo en vez de dar a
+    # entender que se escribieron a la vez.
+    if not con_informe:
+        report_text, valuation_report, report_fecha = _informes_previos(output_filename)
+        if report_text:
+            print(f"   Se conserva el informe anterior (escrito el {report_fecha}).")
+
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "universe_size": len(todos_los_tickers),
@@ -1490,6 +1545,7 @@ def run_pipeline_multifactor(
         "companies": seleccionadas,
         "failed": tickers_fallidos,
         "report": report_text,
+        "report_generated_at": report_fecha,
         "methodology": metodologia,
         "valuation_method": _metodo_valoracion(),
         "valuations": valoraciones,
