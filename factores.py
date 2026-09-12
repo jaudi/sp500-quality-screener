@@ -88,10 +88,17 @@ FACTORES: dict[str, tuple[Metrica, ...]] = {
 
 # Los pesos son la tesis de cada screener. Que estén aquí y no repartidos por el
 # código es lo que permite cambiarlos y medir el efecto.
+#
+# Los cinco factores pesan en los tres screeners. Lo que cambia es la
+# inclinación, nunca la ceguera: un screener de valor que no mire el crecimiento
+# no distingue una empresa barata que crece de una barata que se encoge, y uno de
+# crecimiento que no mire el precio no distingue un buen negocio de un buen
+# negocio ya pagado. Poner ambos factores en los dos es, de hecho, lo que hace el
+# PEG de Lynch —precio contra crecimiento— sin necesidad de un ratio aparte.
 PESOS: dict[str, dict[str, float]] = {
-    "sp500": {"value": 35, "quality": 35, "momentum": 15, "expectativas": 15},
-    "ibex35": {"value": 40, "quality": 35, "momentum": 10, "expectativas": 15},
-    "nasdaq100": {"growth": 40, "quality": 20, "momentum": 25, "expectativas": 15},
+    "sp500": {"value": 30, "quality": 25, "growth": 15, "momentum": 15, "expectativas": 15},
+    "ibex35": {"value": 35, "quality": 25, "growth": 10, "momentum": 15, "expectativas": 15},
+    "nasdaq100": {"growth": 30, "quality": 20, "value": 15, "momentum": 20, "expectativas": 15},
 }
 
 
